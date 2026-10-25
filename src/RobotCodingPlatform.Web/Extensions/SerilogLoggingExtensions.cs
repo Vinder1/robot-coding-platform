@@ -1,3 +1,4 @@
+using Destructurama;
 using Serilog;
 using Serilog.Sinks.OpenSearch;
 
@@ -12,15 +13,16 @@ public static class SerilogLoggingExtensions
 
         builder.Host.UseSerilog((context, services, loggerConfiguration) =>
         {
-            var opensearch = context.Configuration
-                .GetSection("OpenSearch")
-                .Get<OpenSearchOptions>() ?? new OpenSearchOptions();
-
             loggerConfiguration
                 .ReadFrom.Configuration(context.Configuration)
                 .ReadFrom.Services(services)
+                .Destructure.UsingAttributes()
                 .Enrich.FromLogContext()
                 .Enrich.WithProperty("Application", "RCP-WEB");
+
+            var opensearch = context.Configuration
+                .GetSection("OpenSearch")
+                .Get<OpenSearchOptions>() ?? new OpenSearchOptions();
 
             if (!opensearch.Enabled)
             {
@@ -59,7 +61,7 @@ public static class SerilogLoggingExtensions
         return builder;
     }
 
-    public static WebApplication UseCustomSerilog(this WebApplication app)
+    public static WebApplication UseCustomSerilogRequestLogging(this WebApplication app)
     {
         app.UseSerilogRequestLogging(options =>
         {

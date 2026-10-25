@@ -1,6 +1,6 @@
 using Microsoft.OpenApi;
 
-namespace RobotCodingPlatform.Web.Extensions;
+namespace RobotCodingPlatform.Web.Features.SwaggerScalar;
 
 public static class DevelopInterfaceExtensions
 {

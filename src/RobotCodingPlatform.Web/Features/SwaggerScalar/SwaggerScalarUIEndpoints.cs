@@ -1,8 +1,8 @@
 using Scalar.AspNetCore;
 
-namespace RobotCodingPlatform.Web.Endpoints;
+namespace RobotCodingPlatform.Web.Features.SwaggerScalar;
 
-public static class SwaggerScalarEndpoints
+public static class SwaggerScalarUIEndpoints
 {
     public static WebApplication MapSwaggerAndScalar(this WebApplication app)
     {

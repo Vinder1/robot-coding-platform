@@ -1,7 +1,0 @@
-{
-    "dotnet.defaultSolution": "src/RobotCodingPlatform.slnx",
-    "cSpell.words": [
-        "opensearch",
-        "Serilog"
-    ]
-}

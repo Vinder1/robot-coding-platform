@@ -75,9 +75,9 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: ${APP_ENVIRONMENT:-Production}
       ASPNETCORE_URLS: http://+:${BACKEND_PORT:-8080}
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=${POSTGRES_PORT};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       Jwt__Key: ${JWT_SECRET_KEY}
-      OpenSearch__NodeUris__0: "http://opensearch:${OPENSEARCH_PORT:-9200}"
+      OpenSearch__NodeUris__0: "http://opensearch:9200"
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     networks:
