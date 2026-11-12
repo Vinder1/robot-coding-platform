@@ -1,22 +1,11 @@
+namespace RobotCodingPlatform.Web.Features.Auth.LogIn;
+
 using FluentValidation;
 
-namespace RobotCodingPlatform.Web.Features.User.SignIn;
-
-public class SignInRequestValidator : AbstractValidator<SignInRequest>
+public class LogInRequestValidator : AbstractValidator<LogInRequest>
 {
-    public SignInRequestValidator()
+    public LogInRequestValidator()
     {
-        RuleFor(x => x.Name)
-            .NotEmpty()
-                .WithMessage("Name is necessary")
-            .MinimumLength(2)
-                .WithMessage("Name must contain at least 2 symbols")
-            .MaximumLength(50)
-                .WithMessage("Name length must be less than 50 symbols")
-            .Matches(@"^[a-zA-Zа-яА-ЯёЁ0-9\s\-_']+$")
-                .WithMessage("Name must contain only letters, digits, spaces, '-', '_' and '`'")
-            .WithName("Имя");
-
         RuleFor(x => x.Email)
             .NotEmpty()
                 .WithMessage("Email is necessary")

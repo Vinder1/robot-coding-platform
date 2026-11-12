@@ -1,4 +1,4 @@
-namespace RobotCodingPlatform.Web.Features.User;
+namespace RobotCodingPlatform.Web.Features.Users;
 
 public class User
 {

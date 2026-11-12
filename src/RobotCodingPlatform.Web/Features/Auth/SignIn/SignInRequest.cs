@@ -1,6 +1,6 @@
 using Destructurama.Attributed;
 
-namespace RobotCodingPlatform.Web.Features.User.SignIn;
+namespace RobotCodingPlatform.Web.Features.Auth.SignIn;
 
 public class SignInRequest
 {
