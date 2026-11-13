@@ -8,16 +8,12 @@ public static class SwaggerScalarUIEndpoints
     {
         if (app.Environment.IsDevelopment())
         {
-            // swagger
-            // available at /swagger
             app.UseSwagger();
             app.UseSwaggerUI(options =>
             {
                 options.SwaggerEndpoint("/swagger/v1/swagger.json", "My API v1");
                 options.RoutePrefix = "swagger";
             });
-            // scalar
-            // available at /scalar
             app.MapOpenApi();
             app.MapScalarApiReference(options =>
             {
