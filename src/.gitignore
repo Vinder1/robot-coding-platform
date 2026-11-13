@@ -59,3 +59,12 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# JetBrains Rider & ReSharper
+.idea/
+.vs/
+*.user
+*.suo
+*.sln.iml
+*.userosscache
+*.DotSettings.user

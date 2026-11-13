@@ -1,8 +1,0 @@
-﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
-	
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=f3c43665_002D288e_002D44b0_002Dba3d_002Da21fe7231cda/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="Tokenize_RecognizesCommandAndNumber" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
-  &lt;TestAncestor&gt;&#xD;
-    &lt;TestId&gt;xUnit::6B83FFED-AE00-44FD-85A7-75F7D619A166::net10.0::RobotCodingPlatform.Tests.LexerTests&lt;/TestId&gt;&#xD;
-    &lt;TestId&gt;xUnit::6B83FFED-AE00-44FD-85A7-75F7D619A166::net10.0::RobotCodingPlatform.Tests.ParserTests&lt;/TestId&gt;&#xD;
-  &lt;/TestAncestor&gt;&#xD;
-&lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
