@@ -1,3 +1,5 @@
 <Solution>
+  <Project Path="RobotCodingPlatform.Core\RobotCodingPlatform.Core.csproj" Type="Classic C#" />
+  <Project Path="RobotCodingPlatform.Tests\RobotCodingPlatform.Tests.csproj" Type="Classic C#" />
   <Project Path="RobotCodingPlatform.Web/RobotCodingPlatform.Web.csproj" />
 </Solution>

@@ -9,11 +9,6 @@ public static class DevelopInterfaceExtensions
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(options =>
         {
-            // var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-            // var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
-
-            // options.IncludeXmlComments(xmlPath);
-
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
             {
                 Name = "Swagger",
