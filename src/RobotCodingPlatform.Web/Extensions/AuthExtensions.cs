@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using RobotCodingPlatform.Web.Features.Auth;
+using RobotCodingPlatform.Web.Features.Users;
 
 namespace RobotCodingPlatform.Web.Extensions;
 
@@ -28,6 +29,9 @@ public static class AuthExtensions
                     Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
             };
         });
-        builder.Services.AddAuthorization();
+        
+        builder.Services.AddAuthorizationBuilder()
+            .AddPolicy("RequireAdminRole", policy => 
+                policy.RequireRole(Roles.Admin));
     }
 }
