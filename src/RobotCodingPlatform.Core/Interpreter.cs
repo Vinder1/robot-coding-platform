@@ -1,7 +1,9 @@
 namespace RobotCodingPlatform.Core;
 
-public class Interpreter(IRobot robot)
+public class Interpreter(IRobot robot, int maxIterations = 1000)
 {
+    private int _iterations;
+    
     public void Interpret(IEnumerable<Node> nodes)
     {
         foreach (var node in nodes) ExecuteNode(node);
@@ -9,6 +11,10 @@ public class Interpreter(IRobot robot)
 
     private void ExecuteNode(Node node)
     {
+        _iterations++;
+        if (_iterations >= maxIterations)
+            throw new ArgumentException("Max iterations reached");
+            
         switch (node)
         {
             case ActionCommand actionCommand:
