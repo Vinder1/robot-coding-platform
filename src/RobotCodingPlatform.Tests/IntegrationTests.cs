@@ -12,7 +12,7 @@ public class IntegrationTests
                        move 1
                    """;
 
-        var map = new GameMap(3, 3, obstacles: [(0, 2)]);
+        var map = new GameMap(3, 3, goal: (0, 1), obstacles: [(0, 2)]);
         var robot = new Robot(map);
 
         var tokens = Lexer.Tokenize(code);
@@ -21,8 +21,7 @@ public class IntegrationTests
 
         interpreter.Interpret(ast);
 
-        Assert.Equal(0, robot.X);
-        Assert.Equal(1, robot.Y);
+        Assert.True(robot.IsGoalReached);
     }
     
     [Fact]
@@ -35,7 +34,7 @@ public class IntegrationTests
                        turn_left
                    """;
 
-        var map = new GameMap(3, 3);
+        var map = new GameMap(3, 3, goal: (1, 0));
         var robot = new Robot(map);
 
         var tokens = Lexer.Tokenize(code);
@@ -45,8 +44,7 @@ public class IntegrationTests
         interpreter.Interpret(ast);
         
         robot.ExecuteCommand("move", [1]);
-        Assert.Equal(1, robot.X);
-        Assert.Equal(0, robot.Y);
+        Assert.True(robot.IsGoalReached);
     }
     
     [Fact]
@@ -57,7 +55,7 @@ public class IntegrationTests
                        move 1
                    """;
 
-        var map = new GameMap(3, 4, obstacles: [(0, 0), (2, 1)]);
+        var map = new GameMap(3, 4, goal: (1, 2), obstacles: [(0, 0), (2, 1)]);
         var robot = new Robot(map, 1);
         
         var tokens = Lexer.Tokenize(code);
@@ -66,8 +64,7 @@ public class IntegrationTests
         
         interpreter.Interpret(ast);
 
-        Assert.Equal(1, robot.X);
-        Assert.Equal(2, robot.Y);
+        Assert.True(robot.IsGoalReached);
     }
     
     [Fact]
@@ -81,7 +78,7 @@ public class IntegrationTests
                        move 1
                    """;
 
-        var map = new GameMap(4, 4);
+        var map = new GameMap(4, 4, goal: (3, 3));
         var robot = new Robot(map);
         
         var tokens = Lexer.Tokenize(code);
@@ -90,8 +87,7 @@ public class IntegrationTests
         
         interpreter.Interpret(ast);
 
-        Assert.Equal(3, robot.X);
-        Assert.Equal(3, robot.Y);
+        Assert.True(robot.IsGoalReached);
     }
     
     [Fact]
@@ -104,7 +100,7 @@ public class IntegrationTests
                        move 1
                    """;
 
-        var map = new GameMap(3, 3);
+        var map = new GameMap(3, 3, goal: (2, 0));
         var robot = new Robot(map);
 
         var tokens = Lexer.Tokenize(code);
@@ -113,7 +109,6 @@ public class IntegrationTests
 
         interpreter.Interpret(ast);
     
-        Assert.Equal(2, robot.X);
-        Assert.Equal(0, robot.Y);
+        Assert.True(robot.IsGoalReached);
     }
 }

@@ -14,6 +14,8 @@ public class Robot(GameMap map, int x = 0, int y = 0) : IRobot
     public int Y { get; private set; } = y;
     private Direction _currentDirection = Direction.North;
     
+    public bool IsGoalReached => X == map.Goal.x && Y == map.Goal.y;
+    
     public void ExecuteCommand(string name, IReadOnlyList<int> arguments)
     {
         switch (name.ToLower())
