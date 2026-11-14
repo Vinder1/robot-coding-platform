@@ -4,6 +4,7 @@ using RobotCodingPlatform.Web.Features.SwaggerScalar;
 using FluentValidation;
 using RobotCodingPlatform.Web.Features.Users;
 using RobotCodingPlatform.Web.Features.Auth;
+using RobotCodingPlatform.Web.Features.Profile;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddCustomSwagger();
@@ -15,6 +16,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.ConfigureDatabase();
 builder.Services.AddUserServices();
 builder.AddAuthServices();
+builder.AddProfileServices();
 
 builder.Services.AddCarter();
 

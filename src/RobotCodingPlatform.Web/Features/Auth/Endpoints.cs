@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using Carter;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis.Options;
 using Microsoft.Extensions.Options;
 using RobotCodingPlatform.Web.Features.Auth.LogIn;
 using RobotCodingPlatform.Web.Features.Auth.Logout;
