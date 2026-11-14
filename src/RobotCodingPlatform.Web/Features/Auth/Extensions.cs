@@ -8,7 +8,7 @@ namespace RobotCodingPlatform.Web.Features.Auth;
 
 public static class AuthExtensions
 {
-    public static IServiceCollection AddAuthServices(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddAuthServices(this WebApplicationBuilder builder)
     {
         var services = builder.Services;
         services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
@@ -20,6 +20,6 @@ public static class AuthExtensions
         services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
 
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-        return services;
+        return builder;
     }
 }
