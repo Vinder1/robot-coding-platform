@@ -27,7 +27,7 @@ public class SignInService(
 
     public async Task<SignInResponse> SignInAsync(SignInRequest request, CancellationToken ct = default)
     {
-        var validationResult = await _validator.ValidateAsync(request);
+        var validationResult = await _validator.ValidateAsync(request, ct);
         if (!validationResult.IsValid)
         {
             return new SignInResponse
@@ -42,7 +42,7 @@ public class SignInService(
             return new SignInResponse
             {
                 Success = false,
-                Errors = ["User with this email already exists"]
+                Errors = ["This email is already in use, either by existing user or recently deleted."]
             };
         }
 
