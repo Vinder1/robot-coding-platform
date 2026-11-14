@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using RobotCodingPlatform.Web.Features.Auth;
 
 namespace RobotCodingPlatform.Web.Extensions;
 
@@ -8,6 +9,10 @@ public static class AuthExtensions
 {
     public static void AddCustomAuthentication(this WebApplicationBuilder builder)
     {
+        var jwtSettings = builder.Configuration
+            .GetSection(JwtSettings.SectionName)
+            .Get<JwtSettings>()!;
+            
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
@@ -17,10 +22,10 @@ public static class AuthExtensions
                 ValidateAudience = true,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                ValidAudience = builder.Configuration["Jwt:Audience"],
+                ValidIssuer = jwtSettings.Issuer,
+                ValidAudience = jwtSettings.Audience,
                 IssuerSigningKey = new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                    Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
             };
         });
         builder.Services.AddAuthorization();

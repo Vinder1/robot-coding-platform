@@ -14,7 +14,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.ConfigureDatabase();
 builder.Services.AddUserServices();
-builder.Services.AddAuthServices();
+builder.AddAuthServices();
 
 builder.Services.AddCarter();
 

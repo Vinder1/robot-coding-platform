@@ -22,7 +22,25 @@ namespace RobotCodingPlatform.Web.Repositories.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("RobotCodingPlatform.Web.Features.User.User", b =>
+            modelBuilder.Entity("RobotCodingPlatform.Web.Features.Auth.RefreshToken", b =>
+                {
+                    b.Property<string>("TokenHash")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("TokenHash");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
+            modelBuilder.Entity("RobotCodingPlatform.Web.Features.Users.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -54,6 +72,17 @@ namespace RobotCodingPlatform.Web.Repositories.Migrations
                     b.HasIndex("Email");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("RobotCodingPlatform.Web.Features.Auth.RefreshToken", b =>
+                {
+                    b.HasOne("RobotCodingPlatform.Web.Features.Users.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }
