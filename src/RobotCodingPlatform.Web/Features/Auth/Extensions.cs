@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using RobotCodingPlatform.Web.Features.Auth.LogIn;
 using RobotCodingPlatform.Web.Features.Auth.Logout;
 using RobotCodingPlatform.Web.Features.Auth.SignIn;
+using RobotCodingPlatform.Web.Features.Profile.Update;
 using RobotCodingPlatform.Web.Features.Users;
 
 namespace RobotCodingPlatform.Web.Features.Auth;
@@ -20,6 +21,7 @@ public static class AuthExtensions
         services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
 
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IUpdateRoleService, UpdateRoleService>();
         return builder;
     }
 }

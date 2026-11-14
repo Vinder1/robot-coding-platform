@@ -10,6 +10,7 @@ public interface IUserRepository
     public Task<User?> FindByEmailAsync(string email);
     public Task<bool> ExistsWithEmailAsync(string email);
     public Task<User?> UpdateNameAsync(Guid id, string name);
+    public Task<User?> UpdateRoleAsync(Guid id, string role);
 }
 
 public class UserRepository(AppDbContext context) : IUserRepository
@@ -49,8 +50,27 @@ public class UserRepository(AppDbContext context) : IUserRepository
             user.UpdatedAt = DateTime.UtcNow;
             
             await _context.SaveChangesAsync();
+            
+            return user;
         }
 
-        return user;
+        return null;
+    }
+
+    public async Task<User?> UpdateRoleAsync(Guid id, string role)
+    {
+        var user = await _context.Users.FindAsync(id);
+        
+        if (user != null)
+        {
+            user.Role = role;
+            user.UpdatedAt = DateTime.UtcNow;
+            
+            await _context.SaveChangesAsync();
+            
+            return user;
+        }
+
+        return null;
     }
 }

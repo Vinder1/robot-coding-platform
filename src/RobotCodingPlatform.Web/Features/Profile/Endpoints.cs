@@ -25,6 +25,7 @@ public class ProfileEndpoints : ICarterModule
                 {
                     user.Name,
                     user.Email,
+                    user.Role,
                     user.CreatedAt,
                 }) : Results.NotFound();
         })
@@ -54,6 +55,32 @@ public class ProfileEndpoints : ICarterModule
         })
         .RequireAuthorization()
         .WithSummary("Update profile name");
+
+        app.MapPost("/api/me/update-role",
+            async (HttpContext httpContext,
+                UpdateRoleRequest request,
+                IUpdateRoleService service) =>
+        {
+            if (!httpContext.User.Identity!.IsAuthenticated)
+            {
+                return Results.Unauthorized();
+            }
+
+            if (!TryGetUserId(httpContext, out var userId))
+            {
+                return Results.Forbid();
+            }
+
+            // TODO: убрать, вынести в админ-панель
+            
+            var result = await service.UpdateRoleAsync(userId, request.Role);
+
+            return result
+                ? Results.Ok(new { Success = true })
+                : Results.Forbid();
+        })
+        .RequireAuthorization()
+        .WithSummary("Update user role (Admin only)");
 
         group.MapGet("{userId}", async (
             Guid userId, 

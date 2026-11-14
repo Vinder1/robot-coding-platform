@@ -6,6 +6,7 @@ public class User
     public string Name { get; set; } = null!;
     public string Email { get; init; } = null!;
     public string PasswordHash { get; set; } = null!;
+    public string Role { get; set; } = Roles.User; // "User" или "Admin"
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }

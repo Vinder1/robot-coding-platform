@@ -50,7 +50,10 @@ public class SignInService(
         {
             Id = Guid.NewGuid(),
             Name = request.Name,
-            Email = request.Email
+            Email = request.Email,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            Role = Roles.User
         };
 
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
