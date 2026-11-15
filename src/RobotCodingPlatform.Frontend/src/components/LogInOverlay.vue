@@ -26,6 +26,7 @@
 
 <script setup lang="ts">
 import { api } from '@/api/api';
+import { auth } from '@/api/auth';
 import { useAuthStore } from '@/stores/authStore';
 import axios from 'axios';
 import { ref } from 'vue'
@@ -52,6 +53,7 @@ const handleLogin = async () => {
 
     authStore.isLoggedIn = true
     authStore.user = response.data.user
+    auth.setToken(response.data.newAccessToken.token);
 
     authStore.showLoginOverlay = false
     loginError.value = ''

@@ -37,6 +37,7 @@ import { ref } from 'vue';
 import { useAuthStore } from '@/stores/authStore';
 import { api } from '@/api/api';
 import axios from 'axios';
+import { auth } from '@/api/auth';
 
 const registerForm = ref({ email: '', password: '', name: '' })
 const registerError = ref('')
@@ -57,6 +58,7 @@ const handleRegister = async () => {
 
     authStore.isLoggedIn = true
     authStore.user = response.data.user
+    auth.setToken(response.data.newAccessToken)
 
     authStore.showRegisterOverlay = false
     registerError.value = ''

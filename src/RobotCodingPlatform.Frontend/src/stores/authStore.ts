@@ -14,8 +14,8 @@ export const useAuthStore = defineStore('auth', () => {
     role: "unknown",
   });
 
-  function initialize() {
-      isLoggedIn.value = auth.isSignedInLight();
+  async function initialize() {
+    isLoggedIn.value = await auth.isSignedInWithRefresh();
   }
 
   function reset() {

@@ -22,6 +22,7 @@ import { useAuthStore } from './stores/authStore.ts'
 import LogOut from './components/LogOut.vue';
 
 const authStore = useAuthStore()
+authStore.initialize()
 </script>
 
 <style scoped>

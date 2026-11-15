@@ -1,8 +1,15 @@
-import axios from "axios";
+import { api } from "./api";
 
 export const auth = {
   isSignedInLight() {
     return this.getToken() != null;
+  },
+
+  async isSignedInWithRefresh() {
+    if (this.getToken() != null)
+      return true;
+    await this.refresh();
+    return this.getToken() != null
   },
 
   getToken() {
@@ -11,7 +18,7 @@ export const auth = {
   },
 
   async refresh() {
-    const response = await axios.post('/auth/refresh/');
+    const response = await api.post('/auth/refresh/');
     this.setToken(response.data.token);
     return response.data.token;
   },
