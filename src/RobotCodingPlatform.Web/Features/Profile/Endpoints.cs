@@ -1,6 +1,7 @@
 using Carter;
+using RobotCodingPlatform.Web.Features.Profile.Get;
+using RobotCodingPlatform.Web.Features.Profile.SoftDelete;
 using RobotCodingPlatform.Web.Features.Profile.Update;
-using RobotCodingPlatform.Web.Features.Users;
 using System.Security.Claims;
 
 namespace RobotCodingPlatform.Web.Features.Profile;
@@ -9,29 +10,31 @@ public class ProfileEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("api/profile").WithTags("Profile");
+        var meGroup = app.MapGroup("api/me").WithTags("Me");
+        var profileGroup = app.MapGroup("api/profile").WithTags("Profile");
 
-        app.MapGet("/api/me", async (HttpContext httpContext, IUserRepository userRepository) =>
+        meGroup.MapGet("/", async (HttpContext httpContext, IProfileService service) =>
         {
             if (!TryGetUserId(httpContext, out var userId))
             {
                 return Results.Unauthorized();
             }
 
-            var user = await userRepository.FindAsync(userId);
+            var user = await service.GetUserByIdAsync(userId);
 
-            return user != null 
+            return user != null
                 ? Results.Ok(new
                 {
                     user.Name,
                     user.Email,
+                    user.Role,
                     user.CreatedAt,
                 }) : Results.NotFound();
         })
         .RequireAuthorization()
         .WithSummary("get current logged user");
 
-        app.MapPost("/api/me/update-name",
+        meGroup.MapPost("/update-name",
             async (HttpContext httpContext,
             UpdateNameRequest request,
             IUpdateProfileService service) =>
@@ -55,13 +58,32 @@ public class ProfileEndpoints : ICarterModule
         .RequireAuthorization()
         .WithSummary("Update profile name");
 
-        group.MapGet("{userId}", async (
-            Guid userId, 
-            HttpContext httpContext, 
+        meGroup.MapDelete("/delete", async (HttpContext httpContext, ISoftDeleteService service) =>
+        {
+            if (!httpContext.User.Identity!.IsAuthenticated)
+            {
+                return Results.Unauthorized();
+            }
+
+            if (!TryGetUserId(httpContext, out var userId))
+            {
+                return Results.Forbid();
+            }
+
+            var result = await service.DeleteAsync(userId);
+
+            return result.Success ? Results.Ok(result) : Results.BadRequest(result);
+        })
+        .RequireAuthorization()
+        .WithSummary("Delete current user (soft delete)");
+
+        profileGroup.MapGet("{userId}", async (
+            Guid userId,
+            HttpContext httpContext,
             IProfileService service) =>
         {
             var userProfile = await service.GetUserByIdAsync(userId);
-            return userProfile != null 
+            return userProfile != null
                 ? Results.Ok(new
                 {
                     userProfile.Name,

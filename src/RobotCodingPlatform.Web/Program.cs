@@ -5,6 +5,7 @@ using FluentValidation;
 using RobotCodingPlatform.Web.Features.Users;
 using RobotCodingPlatform.Web.Features.Auth;
 using RobotCodingPlatform.Web.Features.Profile;
+using RobotCodingPlatform.Web.Features.Admin;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddCustomSwagger();
@@ -14,7 +15,8 @@ builder.AddCustomSerilog();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.ConfigureDatabase();
-builder.Services.AddUserServices();
+builder.AddUserServices();
+builder.AddAdminServices();
 builder.AddAuthServices();
 builder.AddProfileServices();
 

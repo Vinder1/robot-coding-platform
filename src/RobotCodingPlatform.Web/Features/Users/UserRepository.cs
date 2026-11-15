@@ -6,10 +6,12 @@ namespace RobotCodingPlatform.Web.Features.Users;
 public interface IUserRepository
 {
     public Task CreateAsync(User user);
-    public Task<User?> FindAsync(Guid id);
+    public Task<User?> FindActiveAsync(Guid id);
     public Task<User?> FindByEmailAsync(string email);
     public Task<bool> ExistsWithEmailAsync(string email);
     public Task<User?> UpdateNameAsync(Guid id, string name);
+
+    public Task<User?> SoftDeleteAsync(Guid id);
 }
 
 public class UserRepository(AppDbContext context) : IUserRepository
@@ -22,9 +24,14 @@ public class UserRepository(AppDbContext context) : IUserRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<User?> FindAsync(Guid id)
+    public async Task<User?> FindActiveAsync(Guid id)
     {
-        return await _context.Users.FindAsync(id);
+        var user = await _context.Users.FindAsync(id);
+        if (user == null || user.DeletedAt != null)
+        {
+            return null;
+        }
+        return user;
     }
 
     public Task<bool> ExistsWithEmailAsync(string email)
@@ -49,8 +56,27 @@ public class UserRepository(AppDbContext context) : IUserRepository
             user.UpdatedAt = DateTime.UtcNow;
             
             await _context.SaveChangesAsync();
+            
+            return user;
         }
 
-        return user;
+        return null;
+    }
+
+    public async Task<User?> SoftDeleteAsync(Guid id)
+    {
+        var user = await _context.Users.FindAsync(id);
+        
+        if (user != null)
+        {
+            user.DeletedAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.UtcNow;
+            
+            await _context.SaveChangesAsync();
+            
+            return user;
+        }
+
+        return null;
     }
 }

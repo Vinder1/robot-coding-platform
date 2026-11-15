@@ -2,9 +2,9 @@ namespace RobotCodingPlatform.Web.Features.Users;
 
 public static class UserExtensions
 {
-    public static IServiceCollection AddUserServices(this IServiceCollection services)
+    public static WebApplicationBuilder AddUserServices(this WebApplicationBuilder builder)
     {
-        services.AddScoped<IUserRepository, UserRepository>();
-        return services;
+        builder.Services.AddScoped<IUserRepository, UserRepository>();
+        return builder;
     }
 }

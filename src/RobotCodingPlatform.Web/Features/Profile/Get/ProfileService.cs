@@ -1,6 +1,6 @@
 using RobotCodingPlatform.Web.Features.Users;
 
-namespace RobotCodingPlatform.Web.Features.Profile;
+namespace RobotCodingPlatform.Web.Features.Profile.Get;
 
 public interface IProfileService
 {
@@ -11,6 +11,13 @@ public class ProfileService(IUserRepository userRepository) : IProfileService
 {
     public async Task<User?> GetUserByIdAsync(Guid userId)
     {
-        return await userRepository.FindAsync(userId);
+        var user = await userRepository.FindActiveAsync(userId);
+        if (user == null || user.DeletedAt != null)
+        {
+            return null;
+        }
+        return user;
     }
 }
+
+
