@@ -30,7 +30,9 @@ app.UseCustomSerilogRequestLogging();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/", () => "Hi!");
+app.UseStaticFiles();
+app.MapGet("/", () => Results.File("index.html", "text/html"));
+
 app.MapSwaggerAndScalar();
 app.MapCarter();
 

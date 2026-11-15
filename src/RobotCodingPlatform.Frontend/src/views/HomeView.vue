@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import App from '../App.vue'
 </script>
 
 <template>
-  <App />
+  <div>
+  </div>
 </template>
+
+<style scoped>
+</style>

@@ -8,8 +8,19 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+      meta: {
+        title: 'Robot Coding Platform',
+        requiresAuth: false // Доступна без авторизации
+      }
     },
   ],
+})
+
+// Обработка глобальных ошибок маршрутизации
+router.onError((error) => {
+  if (error.message?.includes('401')) {
+    console.log('Авторизация не пройдена')
+  }
 })
 
 export default router
