@@ -26,4 +26,7 @@
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\RobotCodingPlatform.Core\RobotCodingPlatform.Core.csproj" />
+  </ItemGroup>
 </Project>

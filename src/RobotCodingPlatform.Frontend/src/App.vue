@@ -9,9 +9,14 @@
       <button @click="authStore.showRegisterOverlay = true" class="btn btn-register">Зарегистрироваться</button>
     </div>
 
-    <LogInOverlay/>
-    <SignUpOverlay/>
-    <UserPanel/>
+    <div class="container">
+      <div class="profile">
+        <LogInOverlay/>
+        <SignUpOverlay/>
+        <UserPanel/>
+      </div>
+      <CodeRunner/>
+    </div>
   </div>
 </template>
 
@@ -20,6 +25,7 @@ import SignUpOverlay from './components/SignUpOverlay.vue'
 import LogInOverlay from './components/LogInOverlay.vue'
 import { useAuthStore } from './stores/authStore.ts'
 import UserPanel from './components/UserPanel.vue';
+import CodeRunner from './components/CodeRunner.vue';
 
 const authStore = useAuthStore()
 authStore.initialize()
@@ -30,7 +36,7 @@ authStore.initialize()
   font-family: Arial, sans-serif;
   text-align: center;
   padding: 40px;
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
   min-height: 100vh;
   display: flex;
@@ -93,6 +99,24 @@ p {
 
 .btn-register:hover {
   background-color: #e0a800;
+}
+
+.profile {
+  width: 320px;
+  flex-shrink: 0;
+  text-align: left;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+  overflow-x: auto;
+  max-width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 @media (max-width: 600px) {
