@@ -1,6 +1,6 @@
 export interface NullableUser {
-    player: User;
-    hasPlayer: boolean;
+    user: User;
+    hasUser: boolean;
 }
 
 export interface User {
@@ -8,4 +8,5 @@ export interface User {
     name: string;
     email: string;
     role: string;
+    createdAt : string;
 }
