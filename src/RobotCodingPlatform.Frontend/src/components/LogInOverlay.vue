@@ -52,7 +52,8 @@ const handleLogin = async () => {
     console.log('Вход выполнен успешно:', response.data)
 
     authStore.isLoggedIn = true
-    authStore.user = response.data.user
+    authStore.user.user = response.data.user
+    authStore.user.hasUser = true
     auth.setToken(response.data.newAccessToken.token);
 
     authStore.showLoginOverlay = false

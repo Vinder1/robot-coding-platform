@@ -25,6 +25,7 @@ public class ProfileEndpoints : ICarterModule
             return user != null
                 ? Results.Ok(new
                 {
+                    user.Id,
                     user.Name,
                     user.Email,
                     user.Role,
@@ -52,8 +53,8 @@ public class ProfileEndpoints : ICarterModule
             var updatedUser = await service.UpdateNameAsync(userId, request);
 
             return updatedUser.Success
-                ? Results.NotFound(updatedUser)
-                : Results.Ok(updatedUser);
+                ? Results.Ok(updatedUser)
+                : Results.BadRequest(updatedUser);
         })
         .RequireAuthorization()
         .WithSummary("Update profile name");

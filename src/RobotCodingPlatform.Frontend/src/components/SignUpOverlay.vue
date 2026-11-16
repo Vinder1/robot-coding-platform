@@ -57,7 +57,8 @@ const handleRegister = async () => {
     })
 
     authStore.isLoggedIn = true
-    authStore.user = response.data.user
+    authStore.user.user = response.data.user
+    authStore.user.hasUser = true
     auth.setToken(response.data.newAccessToken)
 
     authStore.showRegisterOverlay = false

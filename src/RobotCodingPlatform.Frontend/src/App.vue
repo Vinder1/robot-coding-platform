@@ -11,7 +11,7 @@
 
     <LogInOverlay/>
     <SignUpOverlay/>
-    <LogOut/>
+    <UserPanel/>
   </div>
 </template>
 
@@ -19,7 +19,7 @@
 import SignUpOverlay from './components/SignUpOverlay.vue'
 import LogInOverlay from './components/LogInOverlay.vue'
 import { useAuthStore } from './stores/authStore.ts'
-import LogOut from './components/LogOut.vue';
+import UserPanel from './components/UserPanel.vue';
 
 const authStore = useAuthStore()
 authStore.initialize()
