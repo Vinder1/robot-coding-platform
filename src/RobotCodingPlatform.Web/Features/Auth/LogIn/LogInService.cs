@@ -24,14 +24,25 @@ public class LogInService(
             return new LogInResponse
             {
                 Success = false,
-                Error = "Invalid login or password"
+                Error = "Invalid email or password"
+            };
+        }
+
+        if (user.DeletedAt != null)
+        {
+            logger.LogWarning("Неудачная попытка входа. Пользователь недавно удалён.");
+            
+            return new LogInResponse
+            {
+                Success = false,
+                Error = "User with this email was deleted recently."
             };
         }
 
         var pvResult = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
         if (pvResult != PasswordVerificationResult.Success)
         {
-            logger.LogWarning("Неудачная попытка входа для пользователя {UserId}. Неверный пароль.", user.Id);
+            logger.LogInformation("Неудачная попытка входа для пользователя {UserId}. Неверный пароль.", user.Id);
             
             return new LogInResponse
             {
@@ -49,7 +60,7 @@ public class LogInService(
             Success = true,
             NewAccessToken = result.NewAccessToken,
             NewRefreshToken = result.NewRefreshToken,
-            User = new UserDto(user.Name)
+            User = new UserDto(user.Name, user.Email, user.CreatedAt, user.Id)
         };
     }
 }

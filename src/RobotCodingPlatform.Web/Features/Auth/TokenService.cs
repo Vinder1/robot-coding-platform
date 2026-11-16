@@ -49,7 +49,7 @@ public class TokenService(
             throw new UnauthorizedAccessException("Invalid refresh token");
         }
 
-        var user = await userRepository.FindAsync(storedRefreshToken.UserId);
+        var user = await userRepository.FindActiveAsync(storedRefreshToken.UserId);
         if (user == null)
         {
             throw new KeyNotFoundException("User not found or inactive");

@@ -27,7 +27,7 @@ public class SignInService(
 
     public async Task<SignInResponse> SignInAsync(SignInRequest request, CancellationToken ct = default)
     {
-        var validationResult = await _validator.ValidateAsync(request);
+        var validationResult = await _validator.ValidateAsync(request, ct);
         if (!validationResult.IsValid)
         {
             return new SignInResponse
@@ -42,7 +42,7 @@ public class SignInService(
             return new SignInResponse
             {
                 Success = false,
-                Errors = ["User with this email already exists"]
+                Errors = ["This email is already in use, either by existing user or recently deleted."]
             };
         }
 
@@ -50,7 +50,10 @@ public class SignInService(
         {
             Id = Guid.NewGuid(),
             Name = request.Name,
-            Email = request.Email
+            Email = request.Email,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            Role = Roles.User
         };
 
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
@@ -66,7 +69,7 @@ public class SignInService(
             Success = true,
             NewAccessToken = result.NewAccessToken,
             NewRefreshToken = result.NewRefreshToken,
-            User = new UserDto(user.Name)
+            User = new UserDto(user.Name, user.Email, user.CreatedAt, user.Id)
         };
     }
 }

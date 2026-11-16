@@ -1,3 +1,3 @@
 namespace RobotCodingPlatform.Web.Features.Auth;
 
-public record UserDto(string Name);
+public record UserDto(string Name, string Email, DateTime CreatedAt, Guid Id);

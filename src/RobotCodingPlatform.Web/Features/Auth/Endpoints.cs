@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using Carter;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis.Options;
 using Microsoft.Extensions.Options;
 using RobotCodingPlatform.Web.Features.Auth.LogIn;
 using RobotCodingPlatform.Web.Features.Auth.Logout;
@@ -65,6 +64,25 @@ public class AuthEndpoints : ICarterModule
             }
             httpContext.Response.ClearTokensCookie(jwtSettings.Value);
             return Results.NoContent();
+        }).WithSummary("Sign In");
+        
+        group.MapPost("/refresh", async (
+            HttpContext httpContext,
+            ITokenService service,
+            ClaimsPrincipal userClaims,
+            IOptions<JwtSettings> jwtSettings,
+            CancellationToken ct) =>
+        {
+            var refreshToken = httpContext.Request.GetRefreshTokenCookie(jwtSettings.Value);
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                return Results.Unauthorized();
+            }
+            httpContext.Response.ClearTokensCookie(jwtSettings.Value);
+            var result = await service.UpdateTokenAsync(refreshToken, ct);
+            httpContext.Response.SetTokensCookie(result.NewAccessToken, result.NewRefreshToken, jwtSettings.Value);
+
+            return Results.Ok(new { token = result.NewAccessToken.Token });
         }).WithSummary("Sign In");
     }
 }

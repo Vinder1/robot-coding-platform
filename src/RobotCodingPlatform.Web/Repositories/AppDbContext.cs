@@ -14,6 +14,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasIndex(p => p.Email);
+            entity.Property(p => p.Name)
+                .HasMaxLength(50);
+            entity.Property(p => p.Email)
+                .HasMaxLength(254);
+            entity.Property(p => p.Role)
+                .HasMaxLength(10);
         });
 
         modelBuilder.Entity<RefreshToken>(entity =>

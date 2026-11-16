@@ -4,6 +4,10 @@ using RobotCodingPlatform.Web.Features.SwaggerScalar;
 using FluentValidation;
 using RobotCodingPlatform.Web.Features.Users;
 using RobotCodingPlatform.Web.Features.Auth;
+using RobotCodingPlatform.Web.Features.Profile;
+using RobotCodingPlatform.Web.Features.Admin;
+using RobotCodingPlatform.Web.Features.Code;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddCustomSwagger();
@@ -13,8 +17,13 @@ builder.AddCustomSerilog();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 builder.ConfigureDatabase();
-builder.Services.AddUserServices();
+builder.ConfigureMassTransit();
+
+builder.AddUserServices();
+builder.AddAdminServices();
 builder.AddAuthServices();
+builder.AddProfileServices();
+builder.AddCodeServices();
 
 builder.Services.AddCarter();
 
@@ -26,7 +35,9 @@ app.UseCustomSerilogRequestLogging();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/", () => "Hi!");
+app.UseStaticFiles();
+app.MapGet("/", () => Results.File("index.html", "text/html"));
+
 app.MapSwaggerAndScalar();
 app.MapCarter();
 
