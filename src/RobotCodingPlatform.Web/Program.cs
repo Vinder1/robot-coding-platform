@@ -22,6 +22,7 @@ builder.AddUserServices();
 builder.AddAdminServices();
 builder.AddAuthServices();
 builder.AddProfileServices();
+builder.AddCodeServices();
 
 builder.Services.AddMassTransit(x =>
 {
