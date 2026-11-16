@@ -1,5 +1,6 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
+
 COPY ["RobotExecutorWorker/RobotExecutorWorker.csproj", "RobotExecutorWorker/"]
 COPY ["RobotCodingPlatform.Core/RobotCodingPlatform.Core.csproj", "RobotCodingPlatform.Core/"]
 RUN dotnet restore "RobotExecutorWorker/RobotExecutorWorker.csproj"
