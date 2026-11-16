@@ -1,36 +1,43 @@
-using RobotCodingPlatform.Core;
+using MassTransit;
+using RobotCodingPlatform.Core.Contracts;
 
 namespace RobotCodingPlatform.Web.Features.Code;
 
 public interface IRunCodeService
 {
-    public Task<RunCodeResult> Run(RunCodeParams parameters);
+    public Task<RunCodeResult> Run(RunCodeParams parameters, CancellationToken cancellationToken);
 }
 
-public class RunCodeService : IRunCodeService
+public class RunCodeService(
+    IRequestClient<RunScriptCommand> client
+) : IRunCodeService
 {
-    public Task<RunCodeResult> Run(RunCodeParams parameters)
+    public async Task<RunCodeResult> Run(RunCodeParams parameters, CancellationToken cancellationToken)
     {
+        var command = new RunScriptCommand(
+                Code: parameters.Code,
+                Width: parameters.Width,
+                Height: parameters.Height,
+                Goal: (parameters.Goal.X, parameters.Goal.Y),
+                Obstacles: [.. parameters.Obstacles.Select(o => (o.X, o.Y))],
+                StartX: parameters.Start.X,
+                StartY: parameters.Start.Y
+            );
+
         try
         {
-            var map = new GameMap(parameters.Width, parameters.Height,
-                goal: (parameters.Goal.X, parameters.Goal.Y),
-                obstacles: parameters.Obstacles.Select(p => (p.X, p.Y)));
-            var robot = new Robot(map);
+            var response = await client.GetResponse<RunScriptResult>(
+                command, cancellationToken, RequestTimeout.After(s: 10));
 
-            var code = parameters.Code.Replace("\t", "    ");
-
-            var tokens = Lexer.Tokenize(parameters.Code);
-            var ast = Parser.Parse(tokens);
-            var interpreter = new Interpreter(robot);
-
-            interpreter.Interpret(ast);
-
-            return Task.FromResult(new RunCodeResult() { Success = robot.IsGoalReached, Compiled = true });
+            return new RunCodeResult() { Success = response.Message.Success, Message = response.Message.Error ?? "", Compiled = true };
         }
-        catch
+        catch (RequestTimeoutException)
         {
-            return Task.FromResult(new RunCodeResult() { Compiled = false, Success = false });
+            return new RunCodeResult() { Compiled = false, Success = false, Message = "Выполнение скрипта истекло по таймауту" };
+        }
+        catch (RequestFaultException ex)
+        {
+            return new RunCodeResult() { Compiled = false, Success = false, Message = $"Ошибка Worker: {ex.Message}" };
         }
     }
 }

@@ -82,7 +82,7 @@ services:
   robot-worker:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: RobotCodingPlatform.Web/Dockerfile
     container_name: robot-worker
     depends_on:
       rabbitmq:
@@ -97,8 +97,8 @@ services:
 
   backend:
     build:
-      context: ./RobotCodingPlatform.Web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: RobotCodingPlatform.Web/Dockerfile
     container_name: backend
     depends_on:
       postgres:

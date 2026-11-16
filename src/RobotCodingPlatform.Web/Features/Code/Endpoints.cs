@@ -1,4 +1,5 @@
 using Carter;
+using Humanizer;
 using Serilog;
 
 namespace RobotCodingPlatform.Web.Features.Code;
@@ -12,11 +13,10 @@ public class ProfileEndpoints : ICarterModule
         group.MapPost("/run",
             async (HttpContext httpContext,
             RunCodeParams request,
-            // ILogger<RunCodeService> logger,
-            IRunCodeService service) =>
+            IRunCodeService service,
+            CancellationToken token) =>
         {
-            // logger.LogInformation(request.Code);
-            var res = await service.Run(request);
+            var res = await service.Run(request, token);
             return res.Compiled ? Results.Ok(res) : Results.BadRequest(res);
         })
         .RequireAuthorization()
