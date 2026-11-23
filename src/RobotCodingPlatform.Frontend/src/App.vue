@@ -38,6 +38,27 @@
           Профиль
         </button>
         <button
+          type="button"
+          role="tab"
+          class="window-tab"
+          :class="{ active: activeTab === 'challenges' }"
+          :aria-selected="activeTab === 'challenges'"
+          @click="activeTab = 'challenges'"
+        >
+          Поиск challenge
+        </button>
+        <button
+          v-if="authStore.isAdmin"
+          type="button"
+          role="tab"
+          class="window-tab"
+          :class="{ active: activeTab === 'create-challenge' }"
+          :aria-selected="activeTab === 'create-challenge'"
+          @click="activeTab = 'create-challenge'"
+        >
+          Создание challenge
+        </button>
+        <button
           v-if="authStore.isAdmin"
           type="button"
           role="tab"
@@ -53,6 +74,12 @@
       <main class="window">
         <CodeRunner v-show="activeTab === 'code'" />
         <UserInfo v-show="activeTab === 'profile'" />
+        <ChallengeSearch v-show="activeTab === 'challenges'" :refresh-token="challengeRefreshToken" />
+        <ChallengeCreate
+          v-if="authStore.isAdmin"
+          v-show="activeTab === 'create-challenge'"
+          @created="onChallengeCreated"
+        />
         <AdminPanel v-if="authStore.isAdmin" v-show="activeTab === 'admin'" />
       </main>
     </template>
@@ -69,13 +96,21 @@ import LogInOverlay from './components/LogInOverlay.vue';
 import UserInfo from './components/UserInfo.vue';
 import AdminPanel from './components/AdminPanel.vue';
 import CodeRunner from './components/CodeRunner.vue';
+import ChallengeSearch from './components/ChallengeSearch.vue';
+import ChallengeCreate from './components/ChallengeCreate.vue';
 import { useAuthStore } from './stores/authStore.ts';
 
 const authStore = useAuthStore();
 authStore.initialize();
 
-type WindowTab = 'code' | 'profile' | 'admin';
+type WindowTab = 'code' | 'profile' | 'challenges' | 'create-challenge' | 'admin';
 const activeTab = ref<WindowTab>('code');
+const challengeRefreshToken = ref(0);
+
+function onChallengeCreated() {
+  challengeRefreshToken.value += 1;
+  activeTab.value = 'challenges';
+}
 
 // После выхода из аккаунта возвращаемся на вкладку с редактором
 watch(
@@ -85,11 +120,13 @@ watch(
   }
 );
 
-// Если роль администратора сняли, закрываем админ-панель
+// Если роль администратора сняли, закрываем админ-панель и создание challenge
 watch(
   () => authStore.isAdmin,
   (isAdminNow) => {
-    if (!isAdminNow && activeTab.value === 'admin') activeTab.value = 'code';
+    if (!isAdminNow && (activeTab.value === 'admin' || activeTab.value === 'create-challenge')) {
+      activeTab.value = 'code';
+    }
   }
 );
 </script>
