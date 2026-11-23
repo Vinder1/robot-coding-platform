@@ -1,7 +1,6 @@
 <template>
-  <div v-if="authStore.isLoggedIn && authStore.user.hasUser" class="profile-card">
-    <!-- <pre>{{ authStore.$state }}</pre> -->
-    <div class="profile-header">
+  <div v-if="authStore.isLoggedIn && user.hasUser" class="user-info-card">
+    <div class="card-header">
       <div class="avatar">{{ userInitial }}</div>
       <div class="title-group">
         <!-- Режим просмотра имени -->
@@ -42,7 +41,7 @@
           </div>
         </form>
 
-        <span class="role-badge">{{ player.role }}</span>
+        <span v-if="player.role" class="role-badge">{{ formatRole(player.role) }}</span>
       </div>
     </div>
 
@@ -54,11 +53,11 @@
     <div class="profile-details">
       <div class="detail-row">
         <span class="detail-label">Email</span>
-        <span class="detail-value">{{ player.email }}</span>
+        <span class="detail-value">{{ player.email || 'Не указан' }}</span>
       </div>
 
       <div class="detail-row">
-        <span class="detail-label">ID игрока</span>
+        <span class="detail-label">ID пользователя</span>
         <span class="detail-value mono">{{ player.id }}</span>
       </div>
 
@@ -70,7 +69,7 @@
 
     <!-- Кнопки действий -->
     <div class="profile-actions">
-      <LogOut/>
+      <LogOut />
 
       <!-- Обычная кнопка удаления -->
       <button
@@ -111,11 +110,11 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { useAuthStore } from '@/stores/authStore';
-import LogOut from './LogOut.vue';
 import axios from 'axios';
-import { auth } from '@/api/auth.ts';
-import { api } from '@/api/api.ts';
+import { useAuthStore } from '@/stores/authStore';
+import { auth } from '@/api/auth';
+import { api } from '@/api/api';
+import LogOut from './LogOut.vue';
 
 const authStore = useAuthStore();
 
@@ -126,6 +125,7 @@ const isLoading = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
 
+const user = computed(() => authStore.user);
 const player = computed(() => authStore.user.user);
 
 const userInitial = computed(() => {
@@ -147,6 +147,15 @@ const formattedCreatedAt = computed(() => {
     minute: '2-digit'
   }).format(date);
 });
+
+function formatRole(role: string): string {
+  const roleMap: Record<string, string> = {
+    Admin: 'Администратор',
+    User: 'Пользователь',
+    Viewer: 'Смотритель'
+  };
+  return roleMap[role] || role;
+}
 
 function startEditingName() {
   newName.value = player.value.name;
@@ -173,7 +182,7 @@ async function saveName() {
 
   try {
     await api.post('/me/update-name', { name: trimmed });
-    authStore.user.user.name = trimmed;
+    player.value.name = trimmed;
     isEditingName.value = false;
     successMessage.value = 'Имя успешно обновлено';
   } catch (error) {
@@ -183,15 +192,14 @@ async function saveName() {
   }
 }
 
-// --- Удаление аккаунта ---
 async function handleDeleteAccount() {
   isLoading.value = true;
   errorMessage.value = '';
 
   try {
     await api.delete('/me/delete');
-    authStore.reset()
-    auth.clear()
+    authStore.reset();
+    auth.clear();
   } catch (error) {
     errorMessage.value = extractError(error, 'Не удалось удалить аккаунт');
     confirmDelete.value = false;
@@ -212,19 +220,20 @@ function extractError(error: unknown, fallback: string): string {
 </script>
 
 <style scoped>
-.profile-card {
+.user-info-card {
   font-family: Arial, sans-serif;
   background-color: white;
   padding: 40px;
   border-radius: 16px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  max-width: 400px;
-  width: 90%;
+  max-width: 760px;
+  width: 92%;
   margin: 0 auto;
   text-align: left;
+  box-sizing: border-box;
 }
 
-.profile-header {
+.card-header {
   display: flex;
   align-items: flex-start;
   gap: 16px;
@@ -394,7 +403,7 @@ function extractError(error: unknown, fallback: string): string {
 }
 
 .detail-value.mono {
-  font-family: monospace;
+  font-family: 'Consolas', 'Monaco', monospace;
   font-size: 13px;
   color: #555;
 }
@@ -449,5 +458,29 @@ function extractError(error: unknown, fallback: string): string {
 
 .btn-danger:hover:not(:disabled) {
   background-color: #c82333;
+}
+
+.delete-warning {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: #721c24;
+}
+
+.delete-confirm-box {
+  padding: 14px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 10px;
+}
+
+.delete-confirm-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .user-info-card {
+    padding: 24px;
+  }
 }
 </style>
