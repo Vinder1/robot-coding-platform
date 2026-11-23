@@ -1,7 +1,7 @@
 import { auth } from '@/api/auth';
 import type { NullableUser } from '@/types/player';
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { profile } from '@/api/profile'
 
 function empty_user() {
@@ -13,21 +13,30 @@ function empty_nullable_user() {
 
 export const useAuthStore = defineStore('auth', () => {
   const isLoggedIn = ref(false);
+  const isInitialized = ref(false);
   const showLoginModal = ref(false);
   const showRegisterModal = ref(false);
   const user = ref<NullableUser>(empty_nullable_user());
 
+  const isAdmin = computed(
+    () => user.value.hasUser && user.value.user.role?.trim().toLowerCase() === 'admin'
+  );
+
   async function initialize() {
-    isLoggedIn.value = await auth.isSignedInWithRefresh()
-    if (isLoggedIn.value) {
-      try {
+    try {
+      isLoggedIn.value = await auth.isSignedInWithRefresh();
+
+      if (isLoggedIn.value) {
         const profileData = await fetchUserProfile();
-        if (profileData) {
+        if (profileData.hasUser || !user.value.hasUser) {
           user.value = profileData;
         }
-      } catch (error) {
-        console.error('Ошибка получения профиля:', error);
       }
+    } catch (error) {
+      console.error('Ошибка инициализации авторизации:', error);
+      isLoggedIn.value = false;
+    } finally {
+      isInitialized.value = true;
     }
   }
 
@@ -55,6 +64,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     isLoggedIn,
+    isInitialized,
+    isAdmin,
     showLoginOverlay: showLoginModal,
     showRegisterOverlay: showRegisterModal,
     user,

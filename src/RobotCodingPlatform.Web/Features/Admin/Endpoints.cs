@@ -11,6 +11,46 @@ public class AdminEndpoints : ICarterModule
         var group = app.MapGroup("api/admin/users").WithTags("Admin")
             .RequireAuthorization("RequireAdminRole");
 
+        group.MapGet("/", async (
+            int? page,
+            int? pageSize,
+            string? search,
+            bool? includeDeleted,
+            IAdminUserRepository adminRepository,
+            CancellationToken ct) =>
+        {
+            var currentPage = Math.Max(page ?? 1, 1);
+            var currentPageSize = Math.Clamp(pageSize ?? 20, 1, 100);
+
+            var (items, total) = await adminRepository.GetUsersAsync(
+                currentPage,
+                currentPageSize,
+                search,
+                includeDeleted ?? false,
+                ct);
+
+            var totalPages = (int)Math.Ceiling(total / (double)currentPageSize);
+
+            return Results.Ok(new
+            {
+                Items = items.Select(u => new
+                {
+                    u.Id,
+                    u.Name,
+                    u.Email,
+                    u.Role,
+                    u.CreatedAt,
+                    u.UpdatedAt,
+                    u.DeletedAt
+                }),
+                Page = currentPage,
+                PageSize = currentPageSize,
+                Total = total,
+                TotalPages = totalPages
+            });
+        })
+        .WithSummary("List users with pagination (admin only)");
+
         group.MapGet("/{id:guid}", async (
             Guid id,
             IAdminUserRepository adminRepository,

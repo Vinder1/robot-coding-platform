@@ -5,8 +5,11 @@
       <p>Добро пожаловать в платформу!</p>
     </header>
 
+    <!-- Пока профиль загружается, не показываем вкладки, зависящие от роли -->
+    <div v-if="!authStore.isInitialized" class="loading-state">Загрузка профиля...</div>
+
     <!-- Кнопки входа и регистрации -->
-    <div v-if="!authStore.isLoggedIn" class="auth-buttons">
+    <div v-else-if="!authStore.isLoggedIn" class="auth-buttons">
       <button @click="authStore.showLoginOverlay = true" class="btn btn-login">Войти</button>
       <button @click="authStore.showRegisterOverlay = true" class="btn btn-register">Зарегистрироваться</button>
     </div>
@@ -34,11 +37,23 @@
         >
           Профиль
         </button>
+        <button
+          v-if="authStore.isAdmin"
+          type="button"
+          role="tab"
+          class="window-tab"
+          :class="{ active: activeTab === 'admin' }"
+          :aria-selected="activeTab === 'admin'"
+          @click="activeTab = 'admin'"
+        >
+          Админ-панель
+        </button>
       </nav>
 
       <main class="window">
         <CodeRunner v-show="activeTab === 'code'" />
         <UserInfo v-show="activeTab === 'profile'" />
+        <AdminPanel v-if="authStore.isAdmin" v-show="activeTab === 'admin'" />
       </main>
     </template>
 
@@ -52,13 +67,14 @@ import { ref, watch } from 'vue';
 import SignUpOverlay from './components/SignUpOverlay.vue';
 import LogInOverlay from './components/LogInOverlay.vue';
 import UserInfo from './components/UserInfo.vue';
+import AdminPanel from './components/AdminPanel.vue';
 import CodeRunner from './components/CodeRunner.vue';
 import { useAuthStore } from './stores/authStore.ts';
 
 const authStore = useAuthStore();
 authStore.initialize();
 
-type WindowTab = 'code' | 'profile';
+type WindowTab = 'code' | 'profile' | 'admin';
 const activeTab = ref<WindowTab>('code');
 
 // После выхода из аккаунта возвращаемся на вкладку с редактором
@@ -66,6 +82,14 @@ watch(
   () => authStore.isLoggedIn,
   (isLoggedIn) => {
     if (!isLoggedIn) activeTab.value = 'code';
+  }
+);
+
+// Если роль администратора сняли, закрываем админ-панель
+watch(
+  () => authStore.isAdmin,
+  (isAdminNow) => {
+    if (!isAdminNow && activeTab.value === 'admin') activeTab.value = 'code';
   }
 );
 </script>
@@ -102,6 +126,12 @@ watch(
   gap: 20px;
   justify-content: center;
   margin-top: 30px;
+}
+
+.loading-state {
+  margin-top: 30px;
+  color: #777;
+  font-size: 15px;
 }
 
 .btn {

@@ -56,6 +56,8 @@ const handleLogin = async () => {
     authStore.user.hasUser = true
     auth.setToken(response.data.newAccessToken.token);
 
+    await authStore.initialize()
+
     authStore.showLoginOverlay = false
     loginError.value = ''
     loginForm.value = { email: '', password: '' }
