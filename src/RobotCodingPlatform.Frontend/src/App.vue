@@ -23,7 +23,7 @@
           class="window-tab"
           :class="{ active: activeTab === 'code' }"
           :aria-selected="activeTab === 'code'"
-          @click="activeTab = 'code'"
+          @click="openFreeCode"
         >
           Редактор кода
         </button>
@@ -72,9 +72,17 @@
       </nav>
 
       <main class="window">
-        <CodeRunner v-show="activeTab === 'code'" />
+        <CodeRunner
+          v-show="activeTab === 'code'"
+          :challenge="activeChallenge"
+          @exit="exitChallenge"
+        />
         <UserInfo v-show="activeTab === 'profile'" />
-        <ChallengeSearch v-show="activeTab === 'challenges'" :refresh-token="challengeRefreshToken" />
+        <ChallengeSearch
+          v-show="activeTab === 'challenges'"
+          :refresh-token="challengeRefreshToken"
+          @try="onTryChallenge"
+        />
         <ChallengeCreate
           v-if="authStore.isAdmin"
           v-show="activeTab === 'create-challenge'"
@@ -99,6 +107,7 @@ import CodeRunner from './components/CodeRunner.vue';
 import ChallengeSearch from './components/ChallengeSearch.vue';
 import ChallengeCreate from './components/ChallengeCreate.vue';
 import { useAuthStore } from './stores/authStore.ts';
+import type { Challenge } from './types/challenge';
 
 const authStore = useAuthStore();
 authStore.initialize();
@@ -106,17 +115,37 @@ authStore.initialize();
 type WindowTab = 'code' | 'profile' | 'challenges' | 'create-challenge' | 'admin';
 const activeTab = ref<WindowTab>('code');
 const challengeRefreshToken = ref(0);
+const activeChallenge = ref<Challenge | null>(null);
 
 function onChallengeCreated() {
   challengeRefreshToken.value += 1;
   activeTab.value = 'challenges';
 }
 
+function onTryChallenge(challenge: Challenge) {
+  activeChallenge.value = challenge;
+  activeTab.value = 'code';
+}
+
+function exitChallenge() {
+  activeChallenge.value = null;
+  activeTab.value = 'challenges';
+}
+
+// Клик по вкладке «Редактор кода» возвращает к свободному запуску кода
+function openFreeCode() {
+  activeChallenge.value = null;
+  activeTab.value = 'code';
+}
+
 // После выхода из аккаунта возвращаемся на вкладку с редактором
 watch(
   () => authStore.isLoggedIn,
   (isLoggedIn) => {
-    if (!isLoggedIn) activeTab.value = 'code';
+    if (!isLoggedIn) {
+      activeChallenge.value = null;
+      activeTab.value = 'code';
+    }
   }
 );
 

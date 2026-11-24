@@ -1,12 +1,28 @@
 <template>
   <div class="code-runner-card" v-if="authStore.isLoggedIn">
     <div class="card-header">
-      <h2>Запуск кода</h2>
+      <h2>{{ isChallengeMode ? 'Прохождение испытания' : 'Запуск кода' }}</h2>
+    </div>
+
+    <!-- Режим испытания: карта берётся с сервера по id -->
+    <div v-if="challenge" class="challenge-banner">
+      <div class="challenge-banner-main">
+        <strong>{{ challenge.name }}</strong>
+        <div class="challenge-meta">
+          <span class="meta-chip">Поле {{ challenge.width }} × {{ challenge.height }}</span>
+          <span class="meta-chip">Старт ({{ challenge.startX }}, {{ challenge.startY }})</span>
+          <span class="meta-chip">Цель ({{ challenge.goalX }}, {{ challenge.goalY }})</span>
+          <span class="meta-chip">Препятствий: {{ challenge.obstacles.length }}</span>
+        </div>
+      </div>
+      <button type="button" class="btn-exit" @click="emit('exit')">
+        Вернуться к испытанию
+      </button>
     </div>
 
     <form @submit.prevent="runCode" class="runner-form">
-      <!-- Параметры поля и цели -->
-      <div class="params-grid">
+      <!-- Параметры поля и цели (только в свободном режиме) -->
+      <div v-if="!isChallengeMode" class="params-grid">
         <div class="param-box">
           <h3>Размер поля</h3>
           <div class="inputs-row">
@@ -36,8 +52,8 @@
         </div>
       </div>
 
-      <!-- Список препятствий -->
-      <div class="obstacles-section">
+      <!-- Список препятствий (только в свободном режиме) -->
+      <div v-if="!isChallengeMode" class="obstacles-section">
         <div class="section-header">
           <label>Препятствия (Obstacles)</label>
           <button type="button" class="btn-small btn-add" @click="addObstacle">
@@ -76,7 +92,13 @@
 
       <!-- Кнопка отправки -->
       <button type="submit" class="btn btn-primary" :disabled="isLoading">
-        {{ isLoading ? 'Выполнение...' : 'Запустить код' }}
+        {{
+          isLoading
+            ? 'Выполнение...'
+            : isChallengeMode
+              ? 'Проверить решение'
+              : 'Запустить код'
+        }}
       </button>
     </form>
 
@@ -92,9 +114,10 @@
         <strong>{{ runResult.success ? 'Успех!' : 'Задача не решена' }}</strong>
         <p class="result-subtext">
           {{
-            runResult.success
+            runResult.message ||
+            (runResult.success
               ? 'Код успешно выполнен, цель достигнута.'
-              : 'Код отработал, но цель не была достигнута (Success: false).'
+              : 'Код отработал, но цель не была достигнута (Success: false).')
           }}
         </p>
       </div>
@@ -103,12 +126,23 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import axios from 'axios';
 import { api } from '@/api/api';
 import { useAuthStore } from '@/stores/authStore';
+import type { Challenge } from '@/types/challenge';
+
+const props = defineProps<{
+  challenge?: Challenge | null;
+}>();
+
+const emit = defineEmits<{
+  exit: [];
+}>();
 
 const authStore = useAuthStore();
+
+const isChallengeMode = computed(() => Boolean(props.challenge));
 
 // Типы, соответствующие C# DTO
 interface Point {
@@ -126,6 +160,8 @@ interface RunCodeParams {
 
 interface RunCodeResult {
   success: boolean;
+  message?: string;
+  compiled?: boolean;
 }
 
 const codeTextarea = ref<HTMLTextAreaElement | null>(null);
@@ -143,6 +179,15 @@ const form = ref<RunCodeParams>({
   ],
   code: '',
 });
+
+// При переключении на другое испытание сбрасываем прошлый результат
+watch(
+  () => props.challenge?.id,
+  () => {
+    runResult.value = null;
+    errorMessage.value = '';
+  }
+);
 
 // Обработка нажатия Tab внутри textarea
 async function handleTab(event: KeyboardEvent) {
@@ -179,21 +224,30 @@ async function runCode() {
   runResult.value = null;
 
   try {
-    // Проверьте baseURL в вашем '@/api/api':
-    // если baseURL уже '/api', используйте '/code/run', иначе '/api/code/run'
-    const response = await api.post<RunCodeResult>('/code/run', form.value);
+    // В режиме испытания параметры карты не отправляются —
+    // сервер сам загружает их по id испытания.
+    const response = props.challenge
+      ? await api.post<RunCodeResult>('/code/run/challenge', {
+          challengeId: props.challenge.id,
+          code: form.value.code,
+        })
+      : await api.post<RunCodeResult>('/code/run', form.value);
 
-    // Учитываем возможный PascalCase (Success) из C#
     const raw = response.data;
     runResult.value = {
       success: Boolean(raw.success),
+      message: raw.message || undefined,
+      compiled: raw.compiled,
     };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 401) {
         errorMessage.value = 'Требуется авторизация. Пожалуйста, войдите в систему.';
+      } else if (error.response?.status === 404) {
+        errorMessage.value = 'Испытание не найдено.';
       } else {
         errorMessage.value =
+          error.response?.data?.message ||
           error.response?.data?.error ||
           error.response?.data?.title ||
           'Ошибка при выполнении кода на сервере.';
@@ -253,6 +307,65 @@ async function runCode() {
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+/* Баннер испытания */
+.challenge-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: #eaf3ff;
+  border: 1px solid #b6d4fe;
+  border-radius: 12px;
+}
+
+.challenge-banner-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.challenge-banner-main strong {
+  color: #1c4c8c;
+  font-size: 16px;
+  word-break: break-word;
+}
+
+.challenge-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.meta-chip {
+  font-size: 12px;
+  color: #555;
+  background-color: white;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.btn-exit {
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s ease;
+}
+
+.btn-exit:hover {
+  background-color: #0069d9;
 }
 
 /* Сетка параметров поля и цели */

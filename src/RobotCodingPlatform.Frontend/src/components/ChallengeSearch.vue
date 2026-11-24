@@ -52,7 +52,12 @@
     <div v-if="selected" class="challenge-detail">
       <div class="detail-header">
         <h3>{{ selected.name }}</h3>
-        <button type="button" class="btn-close" title="Закрыть" @click="selected = null">×</button>
+        <div class="detail-actions">
+          <button type="button" class="btn btn-primary" @click="tryChallenge">
+            Попробовать испытание
+          </button>
+          <button type="button" class="btn-close" title="Закрыть" @click="selected = null">×</button>
+        </div>
       </div>
 
       <p class="detail-description">{{ selected.description }}</p>
@@ -97,32 +102,14 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { api } from '@/api/api';
-
-interface ChallengeObstacle {
-  x: number;
-  y: number;
-}
-
-interface ChallengeSummary {
-  id: string;
-  name: string;
-  width: number;
-  height: number;
-  startX: number;
-  startY: number;
-  goalX: number;
-  goalY: number;
-  obstacleCount: number;
-  createdAt: string;
-}
-
-interface Challenge extends Omit<ChallengeSummary, 'obstacleCount'> {
-  description: string;
-  obstacles: ChallengeObstacle[];
-}
+import type { Challenge, ChallengeSummary } from '@/types/challenge';
 
 const props = defineProps<{
   refreshToken?: number;
+}>();
+
+const emit = defineEmits<{
+  try: [challenge: Challenge];
 }>();
 
 const challenges = ref<ChallengeSummary[]>([]);
@@ -183,6 +170,11 @@ async function openChallenge(item: ChallengeSummary) {
   } finally {
     isDetailLoading.value = false;
   }
+}
+
+function tryChallenge() {
+  if (!selected.value) return;
+  emit('try', selected.value);
 }
 
 function describeError(error: unknown, fallback: string): string {
@@ -352,6 +344,13 @@ onMounted(loadChallenges);
   word-break: break-word;
 }
 
+.detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
 .btn-close {
   background: none;
   border: none;
@@ -483,6 +482,15 @@ onMounted(loadChallenges);
 
 .btn-secondary:hover:not(:disabled) {
   background-color: #dde2e6;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #0069d9;
 }
 
 .btn-small {
