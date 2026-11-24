@@ -40,6 +40,48 @@ namespace RobotCodingPlatform.Web.Repositories.Migrations
                     b.ToTable("RefreshTokens");
                 });
 
+            modelBuilder.Entity("RobotCodingPlatform.Web.Features.Challenge.Challenge", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(10000)
+                        .HasColumnType("character varying(10000)");
+
+                    b.Property<int>("GoalX")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GoalY")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Height")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("StartX")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StartY")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Width")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Challenges");
+                });
+
             modelBuilder.Entity("RobotCodingPlatform.Web.Features.Users.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -90,6 +132,38 @@ namespace RobotCodingPlatform.Web.Repositories.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RobotCodingPlatform.Web.Features.Challenge.Challenge", b =>
+                {
+                    b.OwnsMany("RobotCodingPlatform.Web.Features.Challenge.ChallengeObstacle", "Obstacles", b1 =>
+                        {
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("Id"));
+
+                            b1.Property<Guid>("ChallengeId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("X")
+                                .HasColumnType("integer");
+
+                            b1.Property<int>("Y")
+                                .HasColumnType("integer");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("ChallengeId");
+
+                            b1.ToTable("ChallengeObstacles", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("ChallengeId");
+                        });
+
+                    b.Navigation("Obstacles");
                 });
 #pragma warning restore 612, 618
         }

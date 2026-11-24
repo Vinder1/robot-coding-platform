@@ -6,6 +6,7 @@ using RobotCodingPlatform.Web.Features.Users;
 using RobotCodingPlatform.Web.Features.Auth;
 using RobotCodingPlatform.Web.Features.Profile;
 using RobotCodingPlatform.Web.Features.Admin;
+using RobotCodingPlatform.Web.Features.Challenge;
 using RobotCodingPlatform.Web.Features.Code;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +25,7 @@ builder.AddAdminServices();
 builder.AddAuthServices();
 builder.AddProfileServices();
 builder.AddCodeServices();
+builder.AddChallengeServices();
 
 builder.Services.AddCarter();
 

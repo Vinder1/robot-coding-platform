@@ -23,7 +23,7 @@
           class="window-tab"
           :class="{ active: activeTab === 'code' }"
           :aria-selected="activeTab === 'code'"
-          @click="activeTab = 'code'"
+          @click="openFreeCode"
         >
           Редактор кода
         </button>
@@ -36,6 +36,27 @@
           @click="activeTab = 'profile'"
         >
           Профиль
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="window-tab"
+          :class="{ active: activeTab === 'challenges' }"
+          :aria-selected="activeTab === 'challenges'"
+          @click="activeTab = 'challenges'"
+        >
+          Поиск challenge
+        </button>
+        <button
+          v-if="authStore.isAdmin"
+          type="button"
+          role="tab"
+          class="window-tab"
+          :class="{ active: activeTab === 'create-challenge' }"
+          :aria-selected="activeTab === 'create-challenge'"
+          @click="activeTab = 'create-challenge'"
+        >
+          Создание challenge
         </button>
         <button
           v-if="authStore.isAdmin"
@@ -51,8 +72,22 @@
       </nav>
 
       <main class="window">
-        <CodeRunner v-show="activeTab === 'code'" />
+        <CodeRunner
+          v-show="activeTab === 'code'"
+          :challenge="activeChallenge"
+          @exit="exitChallenge"
+        />
         <UserInfo v-show="activeTab === 'profile'" />
+        <ChallengeSearch
+          v-show="activeTab === 'challenges'"
+          :refresh-token="challengeRefreshToken"
+          @try="onTryChallenge"
+        />
+        <ChallengeCreate
+          v-if="authStore.isAdmin"
+          v-show="activeTab === 'create-challenge'"
+          @created="onChallengeCreated"
+        />
         <AdminPanel v-if="authStore.isAdmin" v-show="activeTab === 'admin'" />
       </main>
     </template>
@@ -69,27 +104,58 @@ import LogInOverlay from './components/LogInOverlay.vue';
 import UserInfo from './components/UserInfo.vue';
 import AdminPanel from './components/AdminPanel.vue';
 import CodeRunner from './components/CodeRunner.vue';
+import ChallengeSearch from './components/ChallengeSearch.vue';
+import ChallengeCreate from './components/ChallengeCreate.vue';
 import { useAuthStore } from './stores/authStore.ts';
+import type { Challenge } from './types/challenge';
 
 const authStore = useAuthStore();
 authStore.initialize();
 
-type WindowTab = 'code' | 'profile' | 'admin';
+type WindowTab = 'code' | 'profile' | 'challenges' | 'create-challenge' | 'admin';
 const activeTab = ref<WindowTab>('code');
+const challengeRefreshToken = ref(0);
+const activeChallenge = ref<Challenge | null>(null);
+
+function onChallengeCreated() {
+  challengeRefreshToken.value += 1;
+  activeTab.value = 'challenges';
+}
+
+function onTryChallenge(challenge: Challenge) {
+  activeChallenge.value = challenge;
+  activeTab.value = 'code';
+}
+
+function exitChallenge() {
+  activeChallenge.value = null;
+  activeTab.value = 'challenges';
+}
+
+// Клик по вкладке «Редактор кода» возвращает к свободному запуску кода
+function openFreeCode() {
+  activeChallenge.value = null;
+  activeTab.value = 'code';
+}
 
 // После выхода из аккаунта возвращаемся на вкладку с редактором
 watch(
   () => authStore.isLoggedIn,
   (isLoggedIn) => {
-    if (!isLoggedIn) activeTab.value = 'code';
+    if (!isLoggedIn) {
+      activeChallenge.value = null;
+      activeTab.value = 'code';
+    }
   }
 );
 
-// Если роль администратора сняли, закрываем админ-панель
+// Если роль администратора сняли, закрываем админ-панель и создание challenge
 watch(
   () => authStore.isAdmin,
   (isAdminNow) => {
-    if (!isAdminNow && activeTab.value === 'admin') activeTab.value = 'code';
+    if (!isAdminNow && (activeTab.value === 'admin' || activeTab.value === 'create-challenge')) {
+      activeTab.value = 'code';
+    }
   }
 );
 </script>
