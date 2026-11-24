@@ -10,20 +10,27 @@ public class RunScriptConsumer(ILogger<RunScriptConsumer> logger) : IConsumer<Ru
     {
         var message = context.Message;
 
-        var result = ScriptExecutor.Execute(
-            message.Code,
-            message.Width,
-            message.Height,
-            (message.Goal.X, message.Goal.Y),
-            (message.Obstacles ?? []).Select(o => (o.X, o.Y)),
-            message.StartX,
-            message.StartY);
-
-        if (result.Error is not null)
+        try
         {
-            logger.LogError("Parsing error: {Error}", result.Error);
-        }
+            var tokens = Lexer.Tokenize(message.Code);
+            var astNodes = Parser.Parse(tokens);
 
-        await context.RespondAsync(new RunScriptResult(result.Success, result.Error));
+            var map = new GameMap(
+                message.Width,
+                message.Height,
+                (message.Goal.X, message.Goal.Y),
+                (message.Obstacles ?? []).Select(o => (o.X, o.Y)));
+            var robot = new Robot(map, message.StartX, message.StartY);
+
+            var interpreter = new Interpreter(robot);
+            interpreter.Interpret(astNodes);
+
+            await context.RespondAsync(new RunScriptResult(robot.IsGoalReached));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Parsing error");
+            await context.RespondAsync(new RunScriptResult(false, ex.Message));
+        }
     }
 }

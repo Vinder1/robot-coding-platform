@@ -128,15 +128,6 @@ turn_right</pre>
           {{ isChallengeMode ? 'Запустить решение' : 'Запустить код' }}
         </button>
         <button
-          v-if="isChallengeMode"
-          type="button"
-          class="btn btn-submit"
-          :disabled="isSubmitting"
-          @click="submitSolution"
-        >
-          {{ isSubmitting ? 'Отправка...' : 'Сдать решение' }}
-        </button>
-        <button
           type="button"
           class="btn btn-secondary"
           :disabled="isChecking"
@@ -146,30 +137,6 @@ turn_right</pre>
         </button>
       </div>
     </form>
-
-    <!-- Отправка решения на сервер: сохранённая попытка -->
-    <div v-if="submissionError" class="result-banner error">
-      <strong>Ошибка отправки:</strong> {{ submissionError }}
-    </div>
-
-    <div
-      v-if="submittedAttempt"
-      class="submission-panel"
-      :class="submissionStatusClass"
-    >
-      <div class="submission-head">
-        <span class="submission-status">{{ submissionStatusLabel }}</span>
-        <span class="submission-id mono">попытка {{ submittedAttempt.id.slice(0, 8) }}</span>
-      </div>
-      <p class="submission-text">{{ submissionResultText }}</p>
-      <p v-if="submittedAttempt.error" class="submission-error-text">{{ submittedAttempt.error }}</p>
-      <p class="submission-meta">
-        Отправлено {{ formatDate(submittedAttempt.createdAt) }}
-        <span v-if="submittedAttempt.completedAt">
-          · завершено {{ formatDate(submittedAttempt.completedAt) }}
-        </span>
-      </p>
-    </div>
 
     <!-- Клиентское исполнение с анимацией робота -->
     <div ref="arenaWrapper">
@@ -210,7 +177,7 @@ turn_right</pre>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import axios from 'axios';
 import { api } from '@/api/api';
 import { useAuthStore } from '@/stores/authStore';
@@ -218,7 +185,6 @@ import RobotArena from './RobotArena.vue';
 import { runRobotProgram } from '@/robot/runner';
 import type { RobotMapConfig, RobotRunResult } from '@/robot/types';
 import type { Challenge } from '@/types/challenge';
-import type { SolutionAttempt, SolutionAttemptSummary } from '@/types/solution';
 
 const props = defineProps<{
   challenge?: Challenge | null;
@@ -226,7 +192,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   exit: [];
-  submitted: [];
 }>();
 
 const authStore = useAuthStore();
@@ -260,19 +225,6 @@ const isChecking = ref(false);
 const errorMessage = ref('');
 const serverResult = ref<ServerRunResult | null>(null);
 const localRun = ref<RobotRunResult | null>(null);
-
-const isSubmitting = ref(false);
-const submissionError = ref('');
-const submittedAttempt = ref<SolutionAttemptSummary | null>(null);
-
-let pollTimer: ReturnType<typeof setTimeout> | null = null;
-
-function clearPollTimer() {
-  if (pollTimer !== null) {
-    clearTimeout(pollTimer);
-    pollTimer = null;
-  }
-}
 
 const form = ref<RunCodeParams>({
   width: 10,
@@ -321,9 +273,6 @@ watch(
     localRun.value = null;
     serverResult.value = null;
     errorMessage.value = '';
-    submissionError.value = '';
-    submittedAttempt.value = null;
-    clearPollTimer();
   },
 );
 
@@ -414,131 +363,6 @@ async function checkOnServer() {
     isChecking.value = false;
   }
 }
-
-// Сохранение попытки решения на сервере (outbox → воркер → результат)
-async function submitSolution() {
-  if (!props.challenge || isSubmitting.value) return;
-
-  if (!form.value.code.trim()) {
-    submissionError.value = 'Введите код решения перед отправкой.';
-    return;
-  }
-
-  isSubmitting.value = true;
-  submissionError.value = '';
-  submittedAttempt.value = null;
-  clearPollTimer();
-
-  try {
-    const { data } = await api.post<SolutionAttempt>('/solutions', {
-      challengeId: props.challenge.id,
-      code: form.value.code,
-    });
-
-    submittedAttempt.value = data;
-    emit('submitted');
-    schedulePoll(data.id);
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (error.response?.status === 401) {
-        submissionError.value = 'Требуется авторизация. Пожалуйста, войдите в систему.';
-      } else if (error.response?.status === 404) {
-        submissionError.value = 'Испытание не найдено.';
-      } else {
-        submissionError.value =
-          error.response?.data?.errors?.[0] ||
-          error.response?.data?.message ||
-          error.response?.data?.error ||
-          error.response?.data?.title ||
-          'Не удалось отправить решение.';
-      }
-    } else if (error instanceof Error) {
-      submissionError.value = error.message;
-    } else {
-      submissionError.value = 'Неизвестная ошибка.';
-    }
-  } finally {
-    isSubmitting.value = false;
-  }
-}
-
-function schedulePoll(attemptId: string) {
-  clearPollTimer();
-
-  pollTimer = setTimeout(async () => {
-    pollTimer = null;
-
-    try {
-      const { data } = await api.get<SolutionAttemptSummary>(`/solutions/${attemptId}`);
-      submittedAttempt.value = data;
-
-      if (data.status === 'Pending') {
-        schedulePoll(attemptId);
-      } else {
-        emit('submitted');
-      }
-    } catch {
-      // Сервер временно недоступен — продолжаем опрос.
-      schedulePoll(attemptId);
-    }
-  }, 1500);
-}
-
-const submissionStatusLabel = computed(() => {
-  const attempt = submittedAttempt.value;
-  if (!attempt) return '';
-
-  switch (attempt.status) {
-    case 'Pending':
-      return 'Решение отправлено';
-    case 'Succeeded':
-      return 'Попытка успешна';
-    case 'Failed':
-      return 'Попытка не удалась';
-    default:
-      return attempt.status;
-  }
-});
-
-const submissionStatusClass = computed(() => {
-  const attempt = submittedAttempt.value;
-  if (!attempt) return '';
-
-  if (attempt.status === 'Pending') return 'pending';
-  return attempt.success ? 'success' : 'failure';
-});
-
-const submissionResultText = computed(() => {
-  const attempt = submittedAttempt.value;
-  if (!attempt) return '';
-
-  if (attempt.status === 'Pending') {
-    return 'Ожидаем результат выполнения на сервере...';
-  }
-
-  if (attempt.success) {
-    return 'Цель достигнута. Попытка сохранена.';
-  }
-
-  return attempt.error
-    ? 'Код завершился с ошибкой. Попытка сохранена.'
-    : 'Цель не достигнута. Попытка сохранена.';
-});
-
-function formatDate(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-
-  return new Intl.DateTimeFormat('ru-RU', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
-}
-
-onUnmounted(clearPollTimer);
 </script>
 
 <style scoped>
@@ -914,88 +738,6 @@ input[type='number']:focus {
 .btn-secondary:hover:not(:disabled) {
   background-color: #dde2e6;
   transform: translateY(-2px);
-}
-
-.btn-submit {
-  background-color: #28a745;
-  color: white;
-}
-
-.btn-submit:hover:not(:disabled) {
-  background-color: #1e7e34;
-  transform: translateY(-2px);
-}
-
-/* Панель сохранённой попытки */
-.submission-panel {
-  margin-top: 24px;
-  padding: 16px;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.submission-panel.pending {
-  background-color: #e7f1ff;
-  border-color: #b6d4fe;
-  color: #0b5ed7;
-}
-
-.submission-panel.success {
-  background-color: #d4edda;
-  border-color: #c3e6cb;
-  color: #155724;
-}
-
-.submission-panel.failure {
-  background-color: #f8d7da;
-  border-color: #f5c6cb;
-  color: #721c24;
-}
-
-.submission-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.submission-status {
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.submission-id {
-  font-size: 11px;
-  opacity: 0.8;
-}
-
-.submission-text {
-  margin: 0;
-  font-size: 14px;
-}
-
-.submission-error-text {
-  margin: 0;
-  padding: 8px 10px;
-  background-color: rgba(255, 255, 255, 0.6);
-  border-radius: 6px;
-  font-size: 13px;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.submission-meta {
-  margin: 0;
-  font-size: 12px;
-  opacity: 0.8;
-}
-
-.mono {
-  font-family: 'Consolas', 'Monaco', monospace;
 }
 
 /* Баннеры результатов */

@@ -94,8 +94,6 @@
           </span>
         </div>
       </div>
-
-      <SolutionAttempts :challenge-id="selected.id" :refresh-token="refreshToken" />
     </div>
   </div>
 </template>
@@ -105,7 +103,6 @@ import { computed, onMounted, ref, watch } from 'vue';
 import axios from 'axios';
 import { api } from '@/api/api';
 import type { Challenge, ChallengeSummary } from '@/types/challenge';
-import SolutionAttempts from './SolutionAttempts.vue';
 
 const props = defineProps<{
   refreshToken?: number;

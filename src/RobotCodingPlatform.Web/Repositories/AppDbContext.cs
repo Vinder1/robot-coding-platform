@@ -1,8 +1,6 @@
-using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using RobotCodingPlatform.Web.Features.Auth;
 using RobotCodingPlatform.Web.Features.Challenge;
-using RobotCodingPlatform.Web.Features.Solution;
 using RobotCodingPlatform.Web.Features.Users;
 
 namespace RobotCodingPlatform.Web.Repositories;
@@ -12,7 +10,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<User> Users { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<Challenge> Challenges { get; set; }
-    public DbSet<SolutionAttempt> SolutionAttempts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -56,32 +53,5 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 obstacle.HasKey("Id");
             });
         });
-
-        modelBuilder.Entity<SolutionAttempt>(entity =>
-        {
-            entity.HasKey(a => a.Id);
-
-            entity.Property(a => a.Code)
-                .IsRequired();
-
-            entity.Property(a => a.Status)
-                .HasConversion<string>()
-                .HasMaxLength(20)
-                .IsRequired();
-
-            entity.Property(a => a.Error)
-                .HasMaxLength(2_000);
-
-            entity.HasOne(a => a.Challenge)
-                .WithMany()
-                .HasForeignKey(a => a.ChallengeId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasIndex(a => new { a.ChallengeId, a.UserId, a.CreatedAt });
-        });
-
-        modelBuilder.AddInboxStateEntity();
-        modelBuilder.AddOutboxMessageEntity();
-        modelBuilder.AddOutboxStateEntity();
     }
 }
