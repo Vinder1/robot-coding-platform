@@ -7,6 +7,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddMassTransit(x =>
         {
             x.AddConsumer<RunScriptConsumer>();
+            x.AddConsumer<RunSolutionConsumer>();
 
             x.UsingRabbitMq((ctx, cfg) =>
             {
