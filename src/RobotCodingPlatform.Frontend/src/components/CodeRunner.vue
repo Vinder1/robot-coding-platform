@@ -4,7 +4,7 @@
       <h2>{{ isChallengeMode ? 'Прохождение испытания' : 'Запуск кода' }}</h2>
     </div>
 
-    <!-- Режим испытания: карта берётся с сервера по id -->
+    <!-- Режим испытания: карта берётся из испытания -->
     <div v-if="challenge" class="challenge-banner">
       <div class="challenge-banner-main">
         <strong>{{ challenge.name }}</strong>
@@ -20,6 +20,24 @@
       </button>
     </div>
 
+    <details class="lang-help">
+      <summary>Команды языка</summary>
+      <ul>
+        <li><code>move N</code> — проехать вперёд на N клеток (по умолчанию 1)</li>
+        <li><code>turn_left</code> / <code>turn_right</code> — повернуть налево / направо</li>
+        <li>Датчики: <code>wall_forward</code>, <code>wall_left</code>, <code>wall_right</code></li>
+        <li>
+          Условия: <code>if</code> / <code>while</code> / <code>else</code>, операторы
+          <code>and</code>, <code>or</code>, <code>not</code>
+        </li>
+        <li>Блок — отступ 4 пробела, комментарии — <code>#</code></li>
+        <li>После <code>if</code> / <code>while</code> / <code>else</code> двоеточие не ставится</li>
+      </ul>
+      <pre class="lang-example">while not wall_forward
+    move
+turn_right</pre>
+    </details>
+
     <form @submit.prevent="runCode" class="runner-form">
       <!-- Параметры поля и цели (только в свободном режиме) -->
       <div v-if="!isChallengeMode" class="params-grid">
@@ -33,6 +51,20 @@
             <div class="form-group">
               <label for="grid-height">Height (Высота)</label>
               <input id="grid-height" v-model.number="form.height" type="number" min="1" required />
+            </div>
+          </div>
+        </div>
+
+        <div class="param-box">
+          <h3>Старт (Start)</h3>
+          <div class="inputs-row">
+            <div class="form-group">
+              <label for="start-x">X</label>
+              <input id="start-x" v-model.number="form.start.x" type="number" min="0" required />
+            </div>
+            <div class="form-group">
+              <label for="start-y">Y</label>
+              <input id="start-y" v-model.number="form.start.y" type="number" min="0" required />
             </div>
           </div>
         </div>
@@ -86,36 +118,55 @@
           <span class="hint">Поддерживается клавиша Tab</span>
         </div>
         <textarea id="code-editor" ref="codeTextarea" v-model="form.code" class="code-textarea" rows="14"
-          spellcheck="false" placeholder="// Введите ваш код здесь..." required
+          spellcheck="false" placeholder="# Введите ваш код здесь..." required
           @keydown.tab.prevent="handleTab"></textarea>
       </div>
 
-      <!-- Кнопка отправки -->
-      <button type="submit" class="btn btn-primary" :disabled="isLoading">
-        {{
-          isLoading
-            ? 'Выполнение...'
-            : isChallengeMode
-              ? 'Проверить решение'
-              : 'Запустить код'
-        }}
-      </button>
+      <!-- Кнопки запуска -->
+      <div class="run-actions">
+        <button type="submit" class="btn btn-primary">
+          {{ isChallengeMode ? 'Запустить решение' : 'Запустить код' }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          :disabled="isChecking"
+          @click="checkOnServer"
+        >
+          {{ isChecking ? 'Проверка...' : 'Проверить на сервере' }}
+        </button>
+      </div>
     </form>
 
-    <!-- Вывод ошибки запроса -->
+    <!-- Клиентское исполнение с анимацией робота -->
+    <div ref="arenaWrapper">
+      <RobotArena
+        v-if="localRun"
+        :width="mapConfig.width"
+        :height="mapConfig.height"
+        :start="mapConfig.start"
+        :goal="mapConfig.goal"
+        :obstacles="mapConfig.obstacles"
+        :frames="localRun.frames"
+        :success="localRun.success"
+        :error="localRun.error"
+      />
+    </div>
+
+    <!-- Вывод ошибки серверной проверки -->
     <div v-if="errorMessage" class="result-banner error">
       <strong>Ошибка:</strong> {{ errorMessage }}
     </div>
 
-    <!-- Вывод результата RunCodeResult -->
-    <div v-if="runResult !== null" class="result-banner" :class="runResult.success ? 'success' : 'failure'">
-      <span class="result-icon">{{ runResult.success ? '✓' : '✕' }}</span>
+    <!-- Вывод результата серверной проверки -->
+    <div v-if="serverResult !== null" class="result-banner" :class="serverResult.success ? 'success' : 'failure'">
+      <span class="result-icon">{{ serverResult.success ? '✓' : '✕' }}</span>
       <div>
-        <strong>{{ runResult.success ? 'Успех!' : 'Задача не решена' }}</strong>
+        <strong>{{ serverResult.success ? 'Сервер: успех!' : 'Сервер: задача не решена' }}</strong>
         <p class="result-subtext">
           {{
-            runResult.message ||
-            (runResult.success
+            serverResult.message ||
+            (serverResult.success
               ? 'Код успешно выполнен, цель достигнута.'
               : 'Код отработал, но цель не была достигнута (Success: false).')
           }}
@@ -130,6 +181,9 @@ import { computed, nextTick, ref, watch } from 'vue';
 import axios from 'axios';
 import { api } from '@/api/api';
 import { useAuthStore } from '@/stores/authStore';
+import RobotArena from './RobotArena.vue';
+import { runRobotProgram } from '@/robot/runner';
+import type { RobotMapConfig, RobotRunResult } from '@/robot/types';
 import type { Challenge } from '@/types/challenge';
 
 const props = defineProps<{
@@ -153,25 +207,29 @@ interface Point {
 interface RunCodeParams {
   height: number;
   width: number;
+  start: Point;
   goal: Point;
   obstacles: Point[];
   code: string;
 }
 
-interface RunCodeResult {
+interface ServerRunResult {
   success: boolean;
   message?: string;
   compiled?: boolean;
 }
 
 const codeTextarea = ref<HTMLTextAreaElement | null>(null);
-const isLoading = ref(false);
+const arenaWrapper = ref<HTMLElement | null>(null);
+const isChecking = ref(false);
 const errorMessage = ref('');
-const runResult = ref<RunCodeResult | null>(null);
+const serverResult = ref<ServerRunResult | null>(null);
+const localRun = ref<RobotRunResult | null>(null);
 
 const form = ref<RunCodeParams>({
   width: 10,
   height: 10,
+  start: { x: 0, y: 0 },
   goal: { x: 5, y: 5 },
   obstacles: [
     { x: 2, y: 2 },
@@ -180,13 +238,42 @@ const form = ref<RunCodeParams>({
   code: '',
 });
 
-// При переключении на другое испытание сбрасываем прошлый результат
+const mapConfig = computed<RobotMapConfig>(() => {
+  if (props.challenge) {
+    return {
+      width: props.challenge.width,
+      height: props.challenge.height,
+      start: { x: props.challenge.startX, y: props.challenge.startY },
+      goal: { x: props.challenge.goalX, y: props.challenge.goalY },
+      obstacles: props.challenge.obstacles.map((o) => ({ x: o.x, y: o.y })),
+    };
+  }
+
+  return {
+    width: Number(form.value.width),
+    height: Number(form.value.height),
+    start: { x: Number(form.value.start.x), y: Number(form.value.start.y) },
+    goal: { x: Number(form.value.goal.x), y: Number(form.value.goal.y) },
+    obstacles: form.value.obstacles.map((o) => ({ x: Number(o.x), y: Number(o.y) })),
+  };
+});
+
+// Изменение карты или испытания сбрасывает прошлый запуск
+watch(
+  mapConfig,
+  () => {
+    localRun.value = null;
+  },
+  { deep: true },
+);
+
 watch(
   () => props.challenge?.id,
   () => {
-    runResult.value = null;
+    localRun.value = null;
+    serverResult.value = null;
     errorMessage.value = '';
-  }
+  },
 );
 
 // Обработка нажатия Tab внутри textarea
@@ -218,23 +305,35 @@ function removeObstacle(index: number) {
   form.value.obstacles.splice(index, 1);
 }
 
-async function runCode() {
-  isLoading.value = true;
+// Клиентское исполнение: лексер → парсер → интерпретатор → кадры для анимации
+function runCode() {
   errorMessage.value = '';
-  runResult.value = null;
+  serverResult.value = null;
+  localRun.value = runRobotProgram(form.value.code, mapConfig.value);
+
+  void nextTick(() => {
+    arenaWrapper.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+}
+
+// Дополнительная проверка на сервере (эндпоинт /api/code/run)
+async function checkOnServer() {
+  isChecking.value = true;
+  errorMessage.value = '';
+  serverResult.value = null;
 
   try {
     // В режиме испытания параметры карты не отправляются —
     // сервер сам загружает их по id испытания.
     const response = props.challenge
-      ? await api.post<RunCodeResult>('/code/run/challenge', {
+      ? await api.post<ServerRunResult>('/code/run/challenge', {
           challengeId: props.challenge.id,
           code: form.value.code,
         })
-      : await api.post<RunCodeResult>('/code/run', form.value);
+      : await api.post<ServerRunResult>('/code/run', form.value);
 
     const raw = response.data;
-    runResult.value = {
+    serverResult.value = {
       success: Boolean(raw.success),
       message: raw.message || undefined,
       compiled: raw.compiled,
@@ -244,7 +343,10 @@ async function runCode() {
       if (error.response?.status === 401) {
         errorMessage.value = 'Требуется авторизация. Пожалуйста, войдите в систему.';
       } else if (error.response?.status === 404) {
-        errorMessage.value = 'Испытание не найдено.';
+        const body = error.response.data as { message?: string } | undefined;
+        errorMessage.value =
+          body?.message ||
+          'Серверная проверка недоступна: эндпоинт не найден. Перезапустите сервер.';
       } else {
         errorMessage.value =
           error.response?.data?.message ||
@@ -258,7 +360,7 @@ async function runCode() {
       errorMessage.value = 'Неизвестная ошибка.';
     }
   } finally {
-    isLoading.value = false;
+    isChecking.value = false;
   }
 }
 </script>
@@ -303,12 +405,6 @@ async function runCode() {
   font-weight: 600;
 }
 
-.runner-form {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
 /* Баннер испытания */
 .challenge-banner {
   display: flex;
@@ -316,7 +412,7 @@ async function runCode() {
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   padding: 16px;
   background-color: #eaf3ff;
   border: 1px solid #b6d4fe;
@@ -368,10 +464,59 @@ async function runCode() {
   background-color: #0069d9;
 }
 
+/* Подсказка по языку */
+.lang-help {
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #444;
+}
+
+.lang-help summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #333;
+}
+
+.lang-help ul {
+  margin: 10px 0 0 0;
+  padding-left: 20px;
+  line-height: 1.7;
+}
+
+.lang-help code {
+  font-family: 'Fira Code', 'Consolas', monospace;
+  background-color: #eef1f5;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.lang-example {
+  margin: 12px 0 0 0;
+  padding: 10px 12px;
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  border-radius: 8px;
+  font-family: 'Fira Code', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-x: auto;
+}
+
+.runner-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 /* Сетка параметров поля и цели */
 .params-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
 }
 
@@ -553,7 +698,13 @@ input[type='number']:focus {
   border-color: #007bff;
 }
 
-/* Кнопка запуска */
+/* Кнопки запуска */
+.run-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .btn {
   padding: 14px 30px;
   font-size: 16px;
@@ -576,6 +727,16 @@ input[type='number']:focus {
 
 .btn-primary:hover:not(:disabled) {
   background-color: #0056b3;
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background-color: #e9ecef;
+  color: #333;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #dde2e6;
   transform: translateY(-2px);
 }
 
@@ -621,6 +782,14 @@ input[type='number']:focus {
 
   .code-runner-card {
     padding: 24px;
+  }
+
+  .run-actions {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
   }
 }
 </style>

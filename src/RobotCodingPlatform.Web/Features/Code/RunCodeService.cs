@@ -22,8 +22,8 @@ public class RunCodeService(
                 Code: parameters.Code,
                 Width: parameters.Width,
                 Height: parameters.Height,
-                Goal: (parameters.Goal.X, parameters.Goal.Y),
-                Obstacles: [.. parameters.Obstacles.Select(o => (o.X, o.Y))],
+                Goal: new MapPoint(parameters.Goal.X, parameters.Goal.Y),
+                Obstacles: [.. parameters.Obstacles.Select(o => new MapPoint(o.X, o.Y))],
                 StartX: parameters.Start.X,
                 StartY: parameters.Start.Y
             );

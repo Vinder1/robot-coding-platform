@@ -15,7 +15,11 @@ public class RunScriptConsumer(ILogger<RunScriptConsumer> logger) : IConsumer<Ru
             var tokens = Lexer.Tokenize(message.Code);
             var astNodes = Parser.Parse(tokens);
 
-            var map = new GameMap(message.Width, message.Height, message.Goal, message.Obstacles);
+            var map = new GameMap(
+                message.Width,
+                message.Height,
+                (message.Goal.X, message.Goal.Y),
+                (message.Obstacles ?? []).Select(o => (o.X, o.Y)));
             var robot = new Robot(map, message.StartX, message.StartY);
 
             var interpreter = new Interpreter(robot);
