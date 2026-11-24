@@ -23,10 +23,28 @@ public static class MassTransitExtensions
 
             x.UsingRabbitMq((context, cfg) =>
             {
-                cfg.Host("localhost", "/", h =>
+                var config = context.GetRequiredService<IConfiguration>();
+                var rabbitMqHost = config
+                    .GetValue<string>("RabbitMQ:Host");
+
+                var rabbitMqUsername = config
+                    .GetValue<string>("RabbitMQ:Username");
+
+                var rabbitMqPassword = config
+                    .GetValue<string>("RabbitMQ:Password");
+
+                if (string.IsNullOrWhiteSpace(rabbitMqHost) ||
+                    string.IsNullOrWhiteSpace(rabbitMqUsername) ||
+                    string.IsNullOrWhiteSpace(rabbitMqPassword))
                 {
-                    h.Username("guest");
-                    h.Password("guest");
+                    throw new InvalidOperationException(
+                        "RabbitMQ configuration is missing.");
+                }
+
+                cfg.Host(rabbitMqHost, "/", h =>
+                {
+                    h.Username(rabbitMqUsername);
+                    h.Password(rabbitMqPassword);
                 });
 
                 cfg.ConfigureEndpoints(context);
