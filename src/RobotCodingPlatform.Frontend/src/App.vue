@@ -76,6 +76,7 @@
           v-show="activeTab === 'code'"
           :challenge="activeChallenge"
           @exit="exitChallenge"
+          @submitted="onSolutionSubmitted"
         />
         <UserInfo v-show="activeTab === 'profile'" />
         <ChallengeSearch
@@ -120,6 +121,11 @@ const activeChallenge = ref<Challenge | null>(null);
 function onChallengeCreated() {
   challengeRefreshToken.value += 1;
   activeTab.value = 'challenges';
+}
+
+// После отправки решения обновляем список попыток в карточке испытания
+function onSolutionSubmitted() {
+  challengeRefreshToken.value += 1;
 }
 
 function onTryChallenge(challenge: Challenge) {
