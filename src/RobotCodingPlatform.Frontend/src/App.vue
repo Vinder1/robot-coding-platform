@@ -1,34 +1,169 @@
 <template>
   <div id="app">
-    <h1>Robot Coding Platform</h1>
-    <p>Добро пожаловать в платформу!</p>
+    <header class="app-header">
+      <h1>Robot Coding Platform</h1>
+      <p>Добро пожаловать в платформу!</p>
+    </header>
+
+    <!-- Пока профиль загружается, не показываем вкладки, зависящие от роли -->
+    <div v-if="!authStore.isInitialized" class="loading-state">Загрузка профиля...</div>
 
     <!-- Кнопки входа и регистрации -->
-    <div class="auth-buttons" v-if="!authStore.isLoggedIn">
+    <div v-else-if="!authStore.isLoggedIn" class="auth-buttons">
       <button @click="authStore.showLoginOverlay = true" class="btn btn-login">Войти</button>
       <button @click="authStore.showRegisterOverlay = true" class="btn btn-register">Зарегистрироваться</button>
     </div>
 
-    <div class="container">
-      <div class="profile">
-        <LogInOverlay/>
-        <SignUpOverlay/>
-        <UserPanel/>
-      </div>
-      <CodeRunner/>
-    </div>
+    <!-- Переключение окон -->
+    <template v-else>
+      <nav class="window-tabs" role="tablist" aria-label="Окна платформы">
+        <button
+          type="button"
+          role="tab"
+          class="window-tab"
+          :class="{ active: activeTab === 'code' }"
+          :aria-selected="activeTab === 'code'"
+          @click="openFreeCode"
+        >
+          Редактор кода
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="window-tab"
+          :class="{ active: activeTab === 'profile' }"
+          :aria-selected="activeTab === 'profile'"
+          @click="activeTab = 'profile'"
+        >
+          Профиль
+        </button>
+        <button
+          type="button"
+          role="tab"
+          class="window-tab"
+          :class="{ active: activeTab === 'challenges' }"
+          :aria-selected="activeTab === 'challenges'"
+          @click="activeTab = 'challenges'"
+        >
+          Поиск challenge
+        </button>
+        <button
+          v-if="authStore.isAdmin"
+          type="button"
+          role="tab"
+          class="window-tab"
+          :class="{ active: activeTab === 'create-challenge' }"
+          :aria-selected="activeTab === 'create-challenge'"
+          @click="activeTab = 'create-challenge'"
+        >
+          Создание challenge
+        </button>
+        <button
+          v-if="authStore.isAdmin"
+          type="button"
+          role="tab"
+          class="window-tab"
+          :class="{ active: activeTab === 'admin' }"
+          :aria-selected="activeTab === 'admin'"
+          @click="activeTab = 'admin'"
+        >
+          Админ-панель
+        </button>
+      </nav>
+
+      <main class="window">
+        <CodeRunner
+          v-show="activeTab === 'code'"
+          :challenge="activeChallenge"
+          @exit="exitChallenge"
+          @submitted="onSolutionSubmitted"
+        />
+        <UserInfo v-show="activeTab === 'profile'" />
+        <ChallengeSearch
+          v-show="activeTab === 'challenges'"
+          :refresh-token="challengeRefreshToken"
+          @try="onTryChallenge"
+        />
+        <ChallengeCreate
+          v-if="authStore.isAdmin"
+          v-show="activeTab === 'create-challenge'"
+          @created="onChallengeCreated"
+        />
+        <AdminPanel v-if="authStore.isAdmin" v-show="activeTab === 'admin'" />
+      </main>
+    </template>
+
+    <LogInOverlay />
+    <SignUpOverlay />
   </div>
 </template>
 
 <script setup lang="ts">
-import SignUpOverlay from './components/SignUpOverlay.vue'
-import LogInOverlay from './components/LogInOverlay.vue'
-import { useAuthStore } from './stores/authStore.ts'
-import UserPanel from './components/UserPanel.vue';
+import { ref, watch } from 'vue';
+import SignUpOverlay from './components/SignUpOverlay.vue';
+import LogInOverlay from './components/LogInOverlay.vue';
+import UserInfo from './components/UserInfo.vue';
+import AdminPanel from './components/AdminPanel.vue';
 import CodeRunner from './components/CodeRunner.vue';
+import ChallengeSearch from './components/ChallengeSearch.vue';
+import ChallengeCreate from './components/ChallengeCreate.vue';
+import { useAuthStore } from './stores/authStore.ts';
+import type { Challenge } from './types/challenge';
 
-const authStore = useAuthStore()
-authStore.initialize()
+const authStore = useAuthStore();
+authStore.initialize();
+
+type WindowTab = 'code' | 'profile' | 'challenges' | 'create-challenge' | 'admin';
+const activeTab = ref<WindowTab>('code');
+const challengeRefreshToken = ref(0);
+const activeChallenge = ref<Challenge | null>(null);
+
+function onChallengeCreated() {
+  challengeRefreshToken.value += 1;
+  activeTab.value = 'challenges';
+}
+
+// После отправки решения обновляем список попыток в карточке испытания
+function onSolutionSubmitted() {
+  challengeRefreshToken.value += 1;
+}
+
+function onTryChallenge(challenge: Challenge) {
+  activeChallenge.value = challenge;
+  activeTab.value = 'code';
+}
+
+function exitChallenge() {
+  activeChallenge.value = null;
+  activeTab.value = 'challenges';
+}
+
+// Клик по вкладке «Редактор кода» возвращает к свободному запуску кода
+function openFreeCode() {
+  activeChallenge.value = null;
+  activeTab.value = 'code';
+}
+
+// После выхода из аккаунта возвращаемся на вкладку с редактором
+watch(
+  () => authStore.isLoggedIn,
+  (isLoggedIn) => {
+    if (!isLoggedIn) {
+      activeChallenge.value = null;
+      activeTab.value = 'code';
+    }
+  }
+);
+
+// Если роль администратора сняли, закрываем админ-панель и создание challenge
+watch(
+  () => authStore.isAdmin,
+  (isAdminNow) => {
+    if (!isAdminNow && (activeTab.value === 'admin' || activeTab.value === 'create-challenge')) {
+      activeTab.value = 'code';
+    }
+  }
+);
 </script>
 
 <style scoped>
@@ -41,18 +176,20 @@ authStore.initialize()
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
 
-h1 {
+.app-header h1 {
   color: #333;
-  margin-bottom: 20px;
+  margin: 0 0 20px 0;
 }
 
-p {
+.app-header p {
   color: #666;
   line-height: 1.6;
-  margin-bottom: 30px;
+  margin: 0 0 30px 0;
 }
 
 /* Кнопки */
@@ -63,6 +200,12 @@ p {
   margin-top: 30px;
 }
 
+.loading-state {
+  margin-top: 30px;
+  color: #777;
+  font-size: 15px;
+}
+
 .btn {
   padding: 12px 30px;
   font-size: 16px;
@@ -71,16 +214,6 @@ p {
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 500;
-}
-
-.btn-primary {
-  background-color: #007bff;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #0056b3;
-  transform: translateY(-2px);
 }
 
 .btn-login {
@@ -101,31 +234,67 @@ p {
   background-color: #e0a800;
 }
 
-.profile {
-  width: 320px;
-  flex-shrink: 0;
-  text-align: left;
+/* Переключение окон */
+.window-tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background-color: #eef1f5;
+  border-radius: 12px;
+  margin-bottom: 24px;
 }
 
-.container {
+.window-tab {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 9px;
+  background-color: transparent;
+  color: #555;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.window-tab:hover {
+  color: #007bff;
+}
+
+.window-tab.active {
+  background-color: white;
+  color: #007bff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.window {
   display: flex;
-  flex-direction: row;
   justify-content: center;
-  align-items: flex-start;
-  gap: 10px;
-  overflow-x: auto;
-  max-width: 100%;
-  padding: 20px;
-  box-sizing: border-box;
+  width: 100%;
 }
 
 @media (max-width: 600px) {
+  #app {
+    padding: 24px 16px;
+  }
+
   .auth-buttons {
     flex-direction: column;
+    width: 100%;
   }
 
   .btn {
     width: 100%;
+  }
+
+  .window-tabs {
+    display: flex;
+    width: 100%;
+  }
+
+  .window-tab {
+    flex: 1;
+    padding: 10px 12px;
   }
 }
 </style>

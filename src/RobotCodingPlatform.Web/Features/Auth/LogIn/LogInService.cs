@@ -60,7 +60,7 @@ public class LogInService(
             Success = true,
             NewAccessToken = result.NewAccessToken,
             NewRefreshToken = result.NewRefreshToken,
-            User = new UserDto(user.Name, user.Email, user.CreatedAt, user.Id)
+            User = new UserDto(user.Name, user.Email, user.CreatedAt, user.Id, user.Role)
         };
     }
 }

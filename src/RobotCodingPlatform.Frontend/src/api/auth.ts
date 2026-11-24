@@ -8,7 +8,11 @@ export const auth = {
   async isSignedInWithRefresh() {
     if (this.getToken() != null)
       return true;
-    await this.refresh();
+    try {
+      await this.refresh();
+    } catch {
+      return false;
+    }
     return this.getToken() != null
   },
 
@@ -19,8 +23,9 @@ export const auth = {
 
   async refresh() {
     const response = await api.post('/auth/refresh/');
-    this.setToken(response.data.token);
-    return response.data.token;
+    const token = response.data?.token;
+    if (token) this.setToken(token);
+    return token;
   },
 
   setToken(value: string) {

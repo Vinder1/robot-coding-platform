@@ -1,5 +1,8 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using RobotCodingPlatform.Web.Features.Auth;
+using RobotCodingPlatform.Web.Features.Challenge;
+using RobotCodingPlatform.Web.Features.Solution;
 using RobotCodingPlatform.Web.Features.Users;
 
 namespace RobotCodingPlatform.Web.Repositories;
@@ -8,6 +11,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<User> Users { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<Challenge> Challenges { get; set; }
+    public DbSet<SolutionAttempt> SolutionAttempts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,5 +35,53 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .HasForeignKey(rt => rt.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.Entity<Challenge>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+
+            entity.Property(c => c.Name)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(c => c.Description)
+                .HasMaxLength(10_000)
+                .IsRequired();
+
+            entity.OwnsMany(c => c.Obstacles, obstacle =>
+            {
+                obstacle.ToTable("ChallengeObstacles");
+                obstacle.WithOwner().HasForeignKey("ChallengeId");
+                obstacle.Property<int>("Id");
+                obstacle.HasKey("Id");
+            });
+        });
+
+        modelBuilder.Entity<SolutionAttempt>(entity =>
+        {
+            entity.HasKey(a => a.Id);
+
+            entity.Property(a => a.Code)
+                .IsRequired();
+
+            entity.Property(a => a.Status)
+                .HasConversion<string>()
+                .HasMaxLength(20)
+                .IsRequired();
+
+            entity.Property(a => a.Error)
+                .HasMaxLength(2_000);
+
+            entity.HasOne(a => a.Challenge)
+                .WithMany()
+                .HasForeignKey(a => a.ChallengeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(a => new { a.ChallengeId, a.UserId, a.CreatedAt });
+        });
+
+        modelBuilder.AddInboxStateEntity();
+        modelBuilder.AddOutboxMessageEntity();
+        modelBuilder.AddOutboxStateEntity();
     }
 }
