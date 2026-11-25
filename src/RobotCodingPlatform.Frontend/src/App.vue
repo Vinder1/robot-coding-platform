@@ -69,6 +69,17 @@
         >
           Админ-панель
         </button>
+        <button
+          v-if="authStore.isAdmin"
+          type="button"
+          role="tab"
+          class="window-tab"
+          :class="{ active: activeTab === 'statistics' }"
+          :aria-selected="activeTab === 'statistics'"
+          @click="activeTab = 'statistics'"
+        >
+          Статистика
+        </button>
       </nav>
 
       <main class="window">
@@ -90,6 +101,7 @@
           @created="onChallengeCreated"
         />
         <AdminPanel v-if="authStore.isAdmin" v-show="activeTab === 'admin'" />
+        <StatisticsPanel v-if="authStore.isAdmin" v-show="activeTab === 'statistics'" />
       </main>
     </template>
 
@@ -104,6 +116,7 @@ import SignUpOverlay from './components/SignUpOverlay.vue';
 import LogInOverlay from './components/LogInOverlay.vue';
 import UserInfo from './components/UserInfo.vue';
 import AdminPanel from './components/AdminPanel.vue';
+import StatisticsPanel from './components/StatisticsPanel.vue';
 import CodeRunner from './components/CodeRunner.vue';
 import ChallengeSearch from './components/ChallengeSearch.vue';
 import ChallengeCreate from './components/ChallengeCreate.vue';
@@ -113,7 +126,7 @@ import type { Challenge } from './types/challenge';
 const authStore = useAuthStore();
 authStore.initialize();
 
-type WindowTab = 'code' | 'profile' | 'challenges' | 'create-challenge' | 'admin';
+type WindowTab = 'code' | 'profile' | 'challenges' | 'create-challenge' | 'admin' | 'statistics';
 const activeTab = ref<WindowTab>('code');
 const challengeRefreshToken = ref(0);
 const activeChallenge = ref<Challenge | null>(null);
@@ -159,7 +172,7 @@ watch(
 watch(
   () => authStore.isAdmin,
   (isAdminNow) => {
-    if (!isAdminNow && (activeTab.value === 'admin' || activeTab.value === 'create-challenge')) {
+    if (!isAdminNow && (activeTab.value === 'admin' || activeTab.value === 'create-challenge' || activeTab.value === 'statistics')) {
       activeTab.value = 'code';
     }
   }

@@ -4,7 +4,9 @@ using RobotCodingPlatform.Core.Contracts;
 
 namespace RobotExecutorWorker;
 
-public class RunScriptConsumer(ILogger<RunScriptConsumer> logger) : IConsumer<RunScriptCommand>
+public class RunScriptConsumer(
+    ILogger<RunScriptConsumer> logger,
+    ExecutionLimits limits) : IConsumer<RunScriptCommand>
 {
     public async Task Consume(ConsumeContext<RunScriptCommand> context)
     {
@@ -17,13 +19,21 @@ public class RunScriptConsumer(ILogger<RunScriptConsumer> logger) : IConsumer<Ru
             (message.Goal.X, message.Goal.Y),
             (message.Obstacles ?? []).Select(o => (o.X, o.Y)),
             message.StartX,
-            message.StartY);
+            message.StartY,
+            limits);
 
         if (result.Error is not null)
         {
-            logger.LogError("Parsing error: {Error}", result.Error);
+            logger.LogWarning(
+                "Script execution finished with {Kind}: {Error}",
+                result.ErrorKind,
+                result.Error);
         }
 
-        await context.RespondAsync(new RunScriptResult(result.Success, result.Error));
+        await context.RespondAsync(new RunScriptResult(
+            result.Success,
+            result.Error,
+            result.Compiled,
+            result.ErrorKind.ToString()));
     }
 }
