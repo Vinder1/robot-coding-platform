@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using RobotCodingPlatform.Web.Features.Auth.LogIn;
 using RobotCodingPlatform.Web.Features.Auth.Logout;
 using RobotCodingPlatform.Web.Features.Auth.SignIn;
+using RobotCodingPlatform.Web.Extensions;
 
 namespace RobotCodingPlatform.Web.Features.Auth;
 
@@ -12,7 +13,9 @@ public class AuthEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("api/auth").WithTags("Auth");
+        var group = app.MapGroup("api/auth")
+            .WithTags("Auth")
+            .RequireRateLimiting(RateLimitingExtensions.AuthPolicy);
 
         group.MapPost("/signin", async (
             [FromBody] SignInRequest request,

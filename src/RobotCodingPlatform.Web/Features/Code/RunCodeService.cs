@@ -16,8 +16,26 @@ public class RunCodeService(
     IChallengeRepository challengeRepository
 ) : IRunCodeService
 {
+    private const int MaxCodeLength = 20_000;
+
     public async Task<RunCodeResult> Run(RunCodeParams parameters, CancellationToken cancellationToken)
     {
+        if (parameters.Goal is null || parameters.Start is null || parameters.Obstacles is null)
+        {
+            return RunCodeResult.InvalidMap("Не заданы старт, цель или препятствия.");
+        }
+
+        if (string.IsNullOrWhiteSpace(parameters.Code))
+        {
+            return RunCodeResult.CompilationError("Код не может быть пустым.");
+        }
+
+        if (parameters.Code.Length > MaxCodeLength)
+        {
+            return RunCodeResult.CompilationError(
+                $"Код не должен превышать {MaxCodeLength} символов.");
+        }
+
         var command = new RunScriptCommand(
                 Code: parameters.Code,
                 Width: parameters.Width,
@@ -33,15 +51,29 @@ public class RunCodeService(
             var response = await client.GetResponse<RunScriptResult>(
                 command, cancellationToken, RequestTimeout.After(s: 10));
 
-            return new RunCodeResult() { Success = response.Message.Success, Message = response.Message.Error ?? "", Compiled = true };
+            return new RunCodeResult
+            {
+                Success = response.Message.Success,
+                Message = response.Message.Error ?? "",
+                Compiled = response.Message.Compiled,
+                ErrorKind = response.Message.ErrorKind
+            };
         }
         catch (RequestTimeoutException)
         {
-            return new RunCodeResult() { Compiled = false, Success = false, Message = "Выполнение скрипта истекло по таймауту" };
+            return RunCodeResult.Timeout("Выполнение скрипта истекло по таймауту.");
         }
         catch (RequestFaultException ex)
         {
-            return new RunCodeResult() { Compiled = false, Success = false, Message = $"Ошибка Worker: {ex.Message}" };
+            return RunCodeResult.WorkerError($"Ошибка Worker: {ex.Message}");
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            return RunCodeResult.WorkerError($"Ошибка Worker: {ex.Message}");
         }
     }
 

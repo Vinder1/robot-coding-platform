@@ -252,6 +252,7 @@ interface ServerRunResult {
   success: boolean;
   message?: string;
   compiled?: boolean;
+  errorKind?: string;
 }
 
 const codeTextarea = ref<HTMLTextAreaElement | null>(null);
@@ -388,11 +389,14 @@ async function checkOnServer() {
       success: Boolean(raw.success),
       message: raw.message || undefined,
       compiled: raw.compiled,
+      errorKind: raw.errorKind,
     };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 401) {
         errorMessage.value = 'Требуется авторизация. Пожалуйста, войдите в систему.';
+      } else if (error.response?.status === 429) {
+        errorMessage.value = 'Слишком много запросов. Подождите немного и попробуйте снова.';
       } else if (error.response?.status === 404) {
         const body = error.response.data as { message?: string } | undefined;
         errorMessage.value =
@@ -442,6 +446,8 @@ async function submitSolution() {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 401) {
         submissionError.value = 'Требуется авторизация. Пожалуйста, войдите в систему.';
+      } else if (error.response?.status === 429) {
+        submissionError.value = 'Слишком много запросов. Подождите немного и попробуйте снова.';
       } else if (error.response?.status === 404) {
         submissionError.value = 'Испытание не найдено.';
       } else {

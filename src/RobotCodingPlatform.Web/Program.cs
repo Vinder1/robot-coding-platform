@@ -15,6 +15,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddCustomSwagger();
 builder.AddCustomScalar();
 builder.AddCustomAuthentication();
+builder.AddCustomCors();
+builder.AddCustomRateLimiting();
 builder.AddCustomSerilog();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
@@ -36,8 +38,10 @@ var app = builder.Build();
 app.Migrate();
 app.UseCustomSerilogRequestLogging();
 
+app.UseCustomCors();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCustomRateLimiting();
 
 app.UseStaticFiles();
 app.MapGet("/", () => Results.File("index.html", "text/html"));

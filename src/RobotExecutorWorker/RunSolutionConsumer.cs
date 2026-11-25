@@ -4,7 +4,9 @@ using RobotCodingPlatform.Core.Contracts;
 
 namespace RobotExecutorWorker;
 
-public class RunSolutionConsumer(ILogger<RunSolutionConsumer> logger) : IConsumer<RunSolutionCommand>
+public class RunSolutionConsumer(
+    ILogger<RunSolutionConsumer> logger,
+    ExecutionLimits limits) : IConsumer<RunSolutionCommand>
 {
     public async Task Consume(ConsumeContext<RunSolutionCommand> context)
     {
@@ -17,13 +19,15 @@ public class RunSolutionConsumer(ILogger<RunSolutionConsumer> logger) : IConsume
             (message.Goal.X, message.Goal.Y),
             (message.Obstacles ?? []).Select(o => (o.X, o.Y)),
             message.StartX,
-            message.StartY);
+            message.StartY,
+            limits);
 
         if (result.Error is not null)
         {
             logger.LogWarning(
-                "Solution attempt {AttemptId} finished with error: {Error}",
+                "Solution attempt {AttemptId} finished with {Kind}: {Error}",
                 message.AttemptId,
+                result.ErrorKind,
                 result.Error);
         }
 

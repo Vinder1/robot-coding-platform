@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Carter;
+using RobotCodingPlatform.Web.Extensions;
 using RobotCodingPlatform.Web.Features.Solution.Create;
 using RobotCodingPlatform.Web.Features.Users;
 
@@ -36,6 +37,7 @@ public class SolutionEndpoints : ICarterModule
                 _ => Results.BadRequest(new { errors = result.Errors })
             };
         })
+        .RequireRateLimiting(RateLimitingExtensions.CodeExecutionPolicy)
         .WithSummary("Submit a solution attempt for a challenge");
 
         group.MapGet("/", async (

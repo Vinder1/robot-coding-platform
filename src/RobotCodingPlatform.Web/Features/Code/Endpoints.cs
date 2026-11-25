@@ -1,8 +1,9 @@
 using Carter;
+using RobotCodingPlatform.Web.Extensions;
 
 namespace RobotCodingPlatform.Web.Features.Code;
 
-public class ProfileEndpoints : ICarterModule
+public class CodeEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
@@ -15,9 +16,10 @@ public class ProfileEndpoints : ICarterModule
             CancellationToken token) =>
         {
             var res = await service.Run(request, token);
-            return res.Compiled ? Results.Ok(res) : Results.BadRequest(res);
+            return ToHttpResult(res);
         })
         .RequireAuthorization()
+        .RequireRateLimiting(RateLimitingExtensions.CodeExecutionPolicy)
         .WithSummary("Run given code with given params");
 
         group.MapPost("/run/challenge",
@@ -27,12 +29,7 @@ public class ProfileEndpoints : ICarterModule
         {
             if (string.IsNullOrWhiteSpace(request.Code))
             {
-                return Results.BadRequest(new RunCodeResult
-                {
-                    Compiled = false,
-                    Success = false,
-                    Message = "Код не может быть пустым."
-                });
+                return ToHttpResult(RunCodeResult.CompilationError("Код не может быть пустым."));
             }
 
             var res = await service.RunChallenge(request.ChallengeId, request.Code, token);
@@ -42,9 +39,21 @@ public class ProfileEndpoints : ICarterModule
                 return Results.NotFound(new { message = "Испытание не найдено." });
             }
 
-            return res.Compiled ? Results.Ok(res) : Results.BadRequest(res);
+            return ToHttpResult(res);
         })
         .RequireAuthorization()
+        .RequireRateLimiting(RateLimitingExtensions.CodeExecutionPolicy)
         .WithSummary("Run code for a saved challenge by its id");
     }
+
+    private static IResult ToHttpResult(RunCodeResult result) => result.ErrorKind switch
+    {
+        RunCodeErrorKind.Compilation or RunCodeErrorKind.InvalidMap =>
+            Results.BadRequest(result),
+        RunCodeErrorKind.Timeout =>
+            Results.Json(result, statusCode: StatusCodes.Status504GatewayTimeout),
+        RunCodeErrorKind.WorkerError =>
+            Results.Json(result, statusCode: StatusCodes.Status502BadGateway),
+        _ => Results.Ok(result)
+    };
 }
