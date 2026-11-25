@@ -1,4 +1,5 @@
 using FluentValidation;
+using RobotCodingPlatform.Core;
 
 namespace RobotCodingPlatform.Web.Features.Challenge.Create;
 
@@ -65,5 +66,25 @@ public class CreateChallengeRequestValidator : AbstractValidator<CreateChallenge
             .Must((request, obstacles) => obstacles == null || !obstacles
                 .Any(o => o.X == request.GoalX && o.Y == request.GoalY))
             .WithMessage("Цель не может совпадать с препятствием.");
+
+        RuleFor(x => x.Obstacles)
+            .Must(obstacles => obstacles == null || obstacles.Count <= MapValidation.MaxObstacles)
+            .WithMessage($"Количество препятствий не должно превышать {MapValidation.MaxObstacles}.");
+
+        RuleFor(x => x)
+            .Must(x => MapValidation.IsReachable(
+                x.Width,
+                x.Height,
+                (x.StartX, x.StartY),
+                (x.GoalX, x.GoalY),
+                x.Obstacles.Select(o => (o.X, o.Y)).ToHashSet()))
+            .WithMessage("Цель недостижима из стартовой точки.")
+            .When(x => x.Width is > 0 and <= MapValidation.MaxDimension
+                    && x.Height is > 0 and <= MapValidation.MaxDimension
+                    && x.StartX >= 0 && x.StartX < x.Width
+                    && x.StartY >= 0 && x.StartY < x.Height
+                    && x.GoalX >= 0 && x.GoalX < x.Width
+                    && x.GoalY >= 0 && x.GoalY < x.Height
+                    && x.Obstacles is not null);
     }
 }

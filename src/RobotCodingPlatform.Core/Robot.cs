@@ -1,6 +1,6 @@
 namespace RobotCodingPlatform.Core;
 
-public class Robot(GameMap map, int x = 0, int y = 0) : IRobot
+public class Robot(GameMap map, int x = 0, int y = 0, ExecutionLimits? limits = null) : IRobot
 {
     private enum Direction
     {
@@ -10,8 +10,11 @@ public class Robot(GameMap map, int x = 0, int y = 0) : IRobot
         West
     }
 
+    private readonly ExecutionLimits _limits = limits ?? ExecutionLimits.Default;
+
     public int X { get; private set; } = x;
     public int Y { get; private set; } = y;
+    public int Steps { get; private set; }
     private Direction _currentDirection = Direction.North;
     
     public bool IsGoalReached => X == map.Goal.x && Y == map.Goal.y;
@@ -51,6 +54,13 @@ public class Robot(GameMap map, int x = 0, int y = 0) : IRobot
 
     private void Move(int steps)
     {
+        if (steps < 0)
+            throw new InvalidOperationException("Step count cannot be negative.");
+
+        if (steps > _limits.MaxSteps - Steps)
+            throw new ExecutionLimitExceededException(
+                $"Execution limit exceeded: robot cannot make more than {_limits.MaxSteps} steps.");
+
         for (var i = 0; i < steps; i++)
         {
             var (dx, dy) = GetDelta(_currentDirection);
@@ -62,6 +72,7 @@ public class Robot(GameMap map, int x = 0, int y = 0) : IRobot
 
             X = nextX;
             Y = nextY;
+            Steps++;
         }
     }
 

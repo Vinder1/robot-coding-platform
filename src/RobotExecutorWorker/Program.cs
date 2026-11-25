@@ -1,9 +1,16 @@
 using MassTransit;
+using RobotCodingPlatform.Core;
 using RobotExecutorWorker;
 
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((context, services) =>
     {
+        var executionLimits = context.Configuration
+            .GetSection("Execution")
+            .Get<ExecutionLimits>() ?? ExecutionLimits.Default;
+
+        services.AddSingleton(executionLimits);
+
         services.AddMassTransit(x =>
         {
             x.AddConsumer<RunScriptConsumer>();

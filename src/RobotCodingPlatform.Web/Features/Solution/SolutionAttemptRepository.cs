@@ -48,6 +48,7 @@ public class SolutionAttemptRepository(AppDbContext context) : ISolutionAttemptR
     public Task<SolutionAttempt?> GetTrackedByIdAsync(Guid id, CancellationToken ct = default)
     {
         return _context.SolutionAttempts
+            .Include(a => a.Challenge)
             .FirstOrDefaultAsync(a => a.Id == id, ct);
     }
 

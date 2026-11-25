@@ -7,6 +7,7 @@ public interface IUserRepository
 {
     public Task CreateAsync(User user);
     public Task<User?> FindActiveAsync(Guid id);
+    public Task<User?> FindByIdAsync(Guid id);
     public Task<User?> FindByEmailAsync(string email);
     public Task<bool> ExistsWithEmailAsync(string email);
     public Task<User?> UpdateNameAsync(Guid id, string name);
@@ -39,6 +40,13 @@ public class UserRepository(AppDbContext context) : IUserRepository
         return _context.Users
             .AsNoTracking()
             .AnyAsync(p => p.Email == email);
+    }
+
+    public Task<User?> FindByIdAsync(Guid id)
+    {
+        return _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(user => user.Id == id);
     }
 
     public async Task<User?> FindByEmailAsync(string email)
