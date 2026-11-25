@@ -9,6 +9,7 @@ using RobotCodingPlatform.Web.Features.Admin;
 using RobotCodingPlatform.Web.Features.Challenge;
 using RobotCodingPlatform.Web.Features.Code;
 using RobotCodingPlatform.Web.Features.Solution;
+using RobotCodingPlatform.Web.Features.Statistics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,12 +31,14 @@ builder.AddProfileServices();
 builder.AddCodeServices();
 builder.AddChallengeServices();
 builder.AddSolutionServices();
+builder.AddStatisticsServices();
 
 builder.Services.AddCarter();
 
 var app = builder.Build();
 
 app.Migrate();
+await app.InitializeOpenSearchAsync();
 app.UseCustomSerilogRequestLogging();
 
 app.UseCustomCors();

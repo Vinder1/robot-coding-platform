@@ -21,7 +21,7 @@ public static class SerilogLoggingExtensions
                 .Enrich.WithProperty("Application", "RCP-WEB");
 
             var opensearch = context.Configuration
-                .GetSection("OpenSearch")
+                .GetSection(OpenSearchOptions.SectionName)
                 .Get<OpenSearchOptions>() ?? new OpenSearchOptions();
 
             if (!opensearch.Enabled)
@@ -40,7 +40,7 @@ public static class SerilogLoggingExtensions
                     $"OpenSearch: NodeUris is required.");
             }
 
-            loggerConfiguration.WriteTo.OpenSearch(new OpenSearchSinkOptions(nodeUris)
+            var sinkOptions = new OpenSearchSinkOptions(nodeUris)
             {
                 IndexFormat = opensearch.IndexFormat,
                 AutoRegisterTemplate = opensearch.AutoRegisterTemplate,
@@ -55,7 +55,29 @@ public static class SerilogLoggingExtensions
                 EmitEventFailure = EmitEventFailureHandling.WriteToSelfLog,
                 FailureCallback = e => Serilog.Debugging.SelfLog.WriteLine(
                     "Unable to submit log event to OpenSearch: {0}", e.MessageTemplate.Text)
-            });
+            };
+
+            if (!string.IsNullOrWhiteSpace(opensearch.Username))
+            {
+                sinkOptions.ModifyConnectionSettings = settings =>
+                {
+                    settings.BasicAuthentication(opensearch.Username, opensearch.Password ?? string.Empty);
+
+                    if (opensearch.AllowInvalidCertificate)
+                    {
+                        settings.ServerCertificateValidationCallback((_, _, _, _) => true);
+                    }
+
+                    return settings;
+                };
+            }
+            else if (opensearch.AllowInvalidCertificate)
+            {
+                sinkOptions.ModifyConnectionSettings = settings =>
+                    settings.ServerCertificateValidationCallback((_, _, _, _) => true);
+            }
+
+            loggerConfiguration.WriteTo.OpenSearch(sinkOptions);
         });
 
         return builder;
@@ -78,19 +100,4 @@ public static class SerilogLoggingExtensions
         return app;
     }
 
-    public class OpenSearchOptions
-    {
-        public bool Enabled { get; set; }
-        public string[] NodeUris { get; set; } = [""];
-        public string IndexFormat { get; set; } = "rcp-web-logs-{0:yyyy.MM.dd}";
-        public bool AutoRegisterTemplate { get; set; } = true;
-        public bool DetectOpenSearchVersion { get; set; } = true;
-        public int NumberOfShards { get; set; } = 1;
-        public int NumberOfReplicas { get; set; } = 0;
-        public int BatchPostingLimit { get; set; } = 50;
-        public int PeriodSeconds { get; set; } = 2;
-        public int QueueSizeLimit { get; set; } = 100_000;
-        public bool InlineFields { get; set; } = true;
-        public int ConnectionTimeoutSeconds { get; set; } = 5;
-    }
 }
