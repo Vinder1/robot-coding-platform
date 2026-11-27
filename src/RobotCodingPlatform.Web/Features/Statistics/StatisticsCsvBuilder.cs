@@ -51,6 +51,7 @@ public static class StatisticsCsvBuilder
             "Email",
             "Статус",
             "Успех",
+            "Итераций",
             "Ошибка",
             "Создана",
             "Завершена");
@@ -65,6 +66,7 @@ public static class StatisticsCsvBuilder
                 row.UserEmail,
                 row.Status,
                 row.Success is null ? "" : row.Success.Value ? "Да" : "Нет",
+                row.Iterations,
                 row.Error,
                 row.CreatedAt,
                 row.CompletedAt);

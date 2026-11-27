@@ -56,7 +56,8 @@ public class RunCodeService(
                 Success = response.Message.Success,
                 Message = response.Message.Error ?? "",
                 Compiled = response.Message.Compiled,
-                ErrorKind = response.Message.ErrorKind
+                ErrorKind = response.Message.ErrorKind,
+                Iterations = response.Message.Iterations
             };
         }
         catch (RequestTimeoutException)

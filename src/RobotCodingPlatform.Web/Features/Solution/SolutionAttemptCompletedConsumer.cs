@@ -29,6 +29,7 @@ public class SolutionAttemptCompletedConsumer(
             : SolutionAttemptStatus.Failed;
         attempt.Success = message.Success;
         attempt.Error = message.Error;
+        attempt.Iterations = message.Iterations;
         attempt.CompletedAt = message.CompletedAt;
 
         await repository.SaveChangesAsync(context.CancellationToken);
@@ -56,6 +57,7 @@ public class SolutionAttemptCompletedConsumer(
                     Status = attempt.Status.ToString(),
                     Success = attempt.Success ?? false,
                     Error = attempt.Error,
+                    Iterations = attempt.Iterations,
                     CreatedAt = attempt.CreatedAt,
                     CompletedAt = attempt.CompletedAt,
                     DurationMs = durationMs

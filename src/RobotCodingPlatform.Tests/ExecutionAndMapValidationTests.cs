@@ -107,4 +107,60 @@ public class ExecutionAndMapValidationTests
 
         Assert.Null(error);
     }
+
+    [Fact]
+    public void ScriptExecutor_SuccessfulRun_ReturnsIterationCount()
+    {
+        var result = ScriptExecutor.Execute("move 1", 3, 3, (0, 1), [], 0, 0);
+
+        Assert.True(result.Success);
+        Assert.Equal(1, result.Iterations);
+    }
+
+    [Fact]
+    public void ScriptExecutor_Loop_CountsLoopControlAndBodyIterations()
+    {
+        var code = """
+                   while not wall_forward
+                       move 1
+                   """;
+
+        var result = ScriptExecutor.Execute(code, 3, 3, (0, 1), [(0, 2)], 0, 0);
+
+        Assert.True(result.Success);
+        // 1 итерация на узел while + по 2 итерации на каждое выполнение тела
+        // (проверка бюджета цикла и узел move).
+        Assert.Equal(3, result.Iterations);
+    }
+
+    [Fact]
+    public void ScriptExecutor_LimitExceeded_ReturnsIterationCount()
+    {
+        var code = """
+                   while true
+                       turn_left
+                   """;
+
+        var result = ScriptExecutor.Execute(
+            code,
+            3,
+            3,
+            (1, 1),
+            [],
+            0,
+            0,
+            new ExecutionLimits { MaxIterations = 100 });
+
+        Assert.Equal(ScriptExecutionErrorKind.LimitExceeded, result.ErrorKind);
+        Assert.True(result.Iterations > 100);
+    }
+
+    [Fact]
+    public void ScriptExecutor_CompilationError_ReturnsZeroIterations()
+    {
+        var result = ScriptExecutor.Execute("move @", 3, 3, (1, 1), [], 0, 0);
+
+        Assert.Equal(ScriptExecutionErrorKind.Compilation, result.ErrorKind);
+        Assert.Equal(0, result.Iterations);
+    }
 }

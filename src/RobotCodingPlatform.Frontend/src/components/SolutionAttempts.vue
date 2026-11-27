@@ -30,6 +30,9 @@
 
         <div class="attempt-meta">
           <span class="attempt-id mono">{{ shortId(attempt.id) }}</span>
+          <span v-if="attempt.iterations !== null" class="attempt-score">
+            Оценка: {{ attempt.iterations }} итераций
+          </span>
           <span v-if="attempt.completedAt" class="attempt-completed">
             завершено {{ formatDate(attempt.completedAt) }}
           </span>
@@ -332,5 +335,10 @@ onUnmounted(clearPollTimer);
 
 .mono {
   font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.attempt-score {
+  color: #0b5ed7;
+  font-weight: 600;
 }
 </style>

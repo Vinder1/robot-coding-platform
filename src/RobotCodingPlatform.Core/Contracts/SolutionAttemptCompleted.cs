@@ -4,5 +4,6 @@ public record SolutionAttemptCompleted(
     Guid AttemptId,
     bool Success,
     string? Error,
-    DateTime CompletedAt
+    DateTime CompletedAt,
+    int Iterations = 0
 );

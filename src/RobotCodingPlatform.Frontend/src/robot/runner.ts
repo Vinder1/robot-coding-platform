@@ -10,7 +10,8 @@ const MAX_FRAMES = 10_000;
 
 /**
  * Полностью клиентское исполнение программы робота.
- * Возвращает кадры для анимации, признак достижения цели и текст ошибки.
+ * Возвращает кадры для анимации, признак достижения цели, число итераций
+ * и текст ошибки.
  */
 export function runRobotProgram(code: string, config: RobotMapConfig): RobotRunResult {
   const frames: RobotFrame[] = [
@@ -21,6 +22,8 @@ export function runRobotProgram(code: string, config: RobotMapConfig): RobotRunR
       action: 'start',
     },
   ];
+
+  let interpreter: Interpreter | null = null;
 
   try {
     const tokens = tokenize(code);
@@ -41,19 +44,21 @@ export function runRobotProgram(code: string, config: RobotMapConfig): RobotRunR
       });
     });
 
-    const interpreter = new Interpreter(robot);
+    interpreter = new Interpreter(robot);
     interpreter.interpret(ast);
 
     return {
       frames,
       success: robot.isGoalReached,
       error: null,
+      iterations: interpreter.iterationCount,
     };
   } catch (error) {
     return {
       frames,
       success: false,
       error: error instanceof Error ? error.message : String(error),
+      iterations: interpreter?.iterationCount ?? 0,
     };
   }
 }

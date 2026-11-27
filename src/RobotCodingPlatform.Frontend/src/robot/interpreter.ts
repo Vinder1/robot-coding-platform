@@ -3,15 +3,18 @@ import type { Condition, Node } from './types';
 
 /**
  * Повторяет Interpreter из RobotCodingPlatform.Core.
- * Счётчик итераций общий на весь запуск, лимит — 1000.
  */
 export class Interpreter {
   private iterations = 0;
 
   constructor(
     private readonly robot: Robot,
-    private readonly maxIterations = 1000,
+    private readonly maxIterations = 10_000,
   ) {}
+
+  get iterationCount(): number {
+    return this.iterations;
+  }
 
   interpret(nodes: readonly Node[]): void {
     for (const node of nodes) {
@@ -20,10 +23,7 @@ export class Interpreter {
   }
 
   private executeNode(node: Node): void {
-    this.iterations++;
-    if (this.iterations >= this.maxIterations) {
-      throw new Error('Max iterations reached');
-    }
+    this.bumpIterations();
 
     switch (node.type) {
       case 'action':
@@ -40,9 +40,18 @@ export class Interpreter {
 
       case 'while':
         while (this.evaluate(node.condition)) {
+          this.bumpIterations();
           this.interpret(node.children);
         }
         break;
+    }
+  }
+
+  private bumpIterations(): void {
+    this.iterations++;
+
+    if (this.iterations > this.maxIterations) {
+      throw new Error(`Execution limit exceeded: more than ${this.maxIterations} iterations.`);
     }
   }
 

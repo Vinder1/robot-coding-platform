@@ -8,6 +8,7 @@ public record SolutionAttemptSummaryDto(
     string Status,
     bool? Success,
     string? Error,
+    int? Iterations,
     DateTime CreatedAt,
     DateTime? CompletedAt);
 
@@ -20,6 +21,7 @@ public record SolutionAttemptDto(
     string Status,
     bool? Success,
     string? Error,
+    int? Iterations,
     DateTime CreatedAt,
     DateTime? CompletedAt);
 
@@ -33,6 +35,7 @@ public static class SolutionAttemptMappings
         attempt.Status.ToString(),
         attempt.Success,
         attempt.Error,
+        attempt.Iterations,
         attempt.CreatedAt,
         attempt.CompletedAt);
 
@@ -45,6 +48,7 @@ public static class SolutionAttemptMappings
         attempt.Status.ToString(),
         attempt.Success,
         attempt.Error,
+        attempt.Iterations,
         attempt.CreatedAt,
         attempt.CompletedAt);
 }

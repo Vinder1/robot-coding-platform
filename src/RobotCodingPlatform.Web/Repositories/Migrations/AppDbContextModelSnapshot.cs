@@ -273,6 +273,9 @@ namespace RobotCodingPlatform.Web.Repositories.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
+                    b.Property<int?>("Iterations")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -285,6 +288,8 @@ namespace RobotCodingPlatform.Web.Repositories.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ChallengeId", "Success", "Iterations");
 
                     b.HasIndex("ChallengeId", "UserId", "CreatedAt");
 

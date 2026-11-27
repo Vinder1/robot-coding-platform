@@ -78,6 +78,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(a => new { a.ChallengeId, a.UserId, a.CreatedAt });
+            entity.HasIndex(a => new { a.ChallengeId, a.Success, a.Iterations });
         });
 
         modelBuilder.AddInboxStateEntity();

@@ -142,6 +142,7 @@ public class StatisticsRepository(AppDbContext context) : IStatisticsRepository
                 a.Status,
                 a.Success,
                 a.Error,
+                a.Iterations,
                 a.CreatedAt,
                 a.CompletedAt
             })
@@ -162,6 +163,7 @@ public class StatisticsRepository(AppDbContext context) : IStatisticsRepository
                 row.Status.ToString(),
                 row.Success,
                 row.Error,
+                row.Iterations,
                 row.CreatedAt,
                 row.CompletedAt);
         }).ToList();
@@ -191,6 +193,7 @@ public class StatisticsRepository(AppDbContext context) : IStatisticsRepository
                 a.Status,
                 a.Success,
                 a.Error,
+                a.Iterations,
                 a.CreatedAt,
                 a.CompletedAt
             })
@@ -216,6 +219,7 @@ public class StatisticsRepository(AppDbContext context) : IStatisticsRepository
                 Status = row.Status.ToString(),
                 Success = row.Success ?? false,
                 Error = row.Error,
+                Iterations = row.Iterations,
                 CreatedAt = row.CreatedAt,
                 CompletedAt = row.CompletedAt,
                 DurationMs = durationMs

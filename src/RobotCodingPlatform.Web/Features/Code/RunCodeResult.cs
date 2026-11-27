@@ -16,6 +16,7 @@ public class RunCodeResult
     public bool Compiled { get; init; }
     public bool Success { get; init; }
     public string? ErrorKind { get; init; }
+    public int Iterations { get; init; }
 
     public static RunCodeResult InvalidMap(string message) => new()
     {

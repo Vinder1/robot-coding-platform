@@ -163,6 +163,9 @@ turn_right</pre>
       </div>
       <p class="submission-text">{{ submissionResultText }}</p>
       <p v-if="submittedAttempt.error" class="submission-error-text">{{ submittedAttempt.error }}</p>
+      <p v-if="submittedAttempt.iterations !== null" class="submission-score">
+        Оценка: <strong>{{ submittedAttempt.iterations }}</strong> итераций
+      </p>
       <p class="submission-meta">
         Отправлено {{ formatDate(submittedAttempt.createdAt) }}
         <span v-if="submittedAttempt.completedAt">
@@ -172,6 +175,9 @@ turn_right</pre>
     </div>
 
     <!-- Клиентское исполнение с анимацией робота -->
+    <p v-if="localRun" class="run-score">
+      Итераций на клиенте: <strong>{{ localRun.iterations }}</strong>
+    </p>
     <div ref="arenaWrapper">
       <RobotArena
         v-if="localRun"
@@ -203,6 +209,9 @@ turn_right</pre>
               ? 'Код успешно выполнен, цель достигнута.'
               : 'Код отработал, но цель не была достигнута (Success: false).')
           }}
+        </p>
+        <p v-if="(serverResult.iterations ?? 0) > 0" class="result-subtext">
+          Итераций на сервере: {{ serverResult.iterations }}
         </p>
       </div>
     </div>
@@ -253,6 +262,7 @@ interface ServerRunResult {
   message?: string;
   compiled?: boolean;
   errorKind?: string;
+  iterations?: number;
 }
 
 const codeTextarea = ref<HTMLTextAreaElement | null>(null);
@@ -390,6 +400,7 @@ async function checkOnServer() {
       message: raw.message || undefined,
       compiled: raw.compiled,
       errorKind: raw.errorKind,
+      iterations: raw.iterations ?? 0,
     };
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -998,6 +1009,23 @@ input[type='number']:focus {
   margin: 0;
   font-size: 12px;
   opacity: 0.8;
+}
+
+.submission-score {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.run-score {
+  margin: 18px 0 0 0;
+  font-size: 13px;
+  color: #555;
+  text-align: center;
+}
+
+.run-score strong {
+  color: #0b5ed7;
 }
 
 .mono {

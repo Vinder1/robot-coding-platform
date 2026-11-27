@@ -4,4 +4,5 @@ public record RunScriptResult(
     bool Success,
     string? Error = null,
     bool Compiled = true,
-    string? ErrorKind = null);
+    string? ErrorKind = null,
+    int Iterations = 0);
