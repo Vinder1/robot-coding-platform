@@ -12,7 +12,8 @@ public enum ScriptExecutionErrorKind
 public record ScriptExecutionResult(
     bool Success,
     string? Error = null,
-    ScriptExecutionErrorKind ErrorKind = ScriptExecutionErrorKind.None)
+    ScriptExecutionErrorKind ErrorKind = ScriptExecutionErrorKind.None,
+    int Iterations = 0)
 {
     /// <summary>
     /// <c>false</c> только при ошибке лексера/парсера. Ошибки карты и рантайма
@@ -83,32 +84,35 @@ public static class ScriptExecutor
                 ScriptExecutionErrorKind.InvalidMap);
         }
 
+        var map = new GameMap(width, height, goal, obstacleList);
+        var robot = new Robot(map, startX, startY, limits);
+        var interpreter = new Interpreter(robot, limits);
+
         try
         {
-            var map = new GameMap(width, height, goal, obstacleList);
-            var robot = new Robot(map, startX, startY, limits);
-
-            var interpreter = new Interpreter(robot, limits);
             interpreter.Interpret(astNodes);
 
             return new ScriptExecutionResult(
                 robot.IsGoalReached,
                 null,
-                ScriptExecutionErrorKind.None);
+                ScriptExecutionErrorKind.None,
+                interpreter.Iterations);
         }
         catch (ExecutionLimitExceededException ex)
         {
             return new ScriptExecutionResult(
                 false,
                 ex.Message,
-                ScriptExecutionErrorKind.LimitExceeded);
+                ScriptExecutionErrorKind.LimitExceeded,
+                interpreter.Iterations);
         }
         catch (Exception ex)
         {
             return new ScriptExecutionResult(
                 false,
                 ex.Message,
-                ScriptExecutionErrorKind.Runtime);
+                ScriptExecutionErrorKind.Runtime,
+                interpreter.Iterations);
         }
     }
 }

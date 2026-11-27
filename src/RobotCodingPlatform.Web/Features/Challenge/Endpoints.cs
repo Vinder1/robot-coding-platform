@@ -1,5 +1,6 @@
 using Carter;
 using RobotCodingPlatform.Web.Features.Challenge.Create;
+using RobotCodingPlatform.Web.Features.Challenge.Rating;
 
 namespace RobotCodingPlatform.Web.Features.Challenge;
 
@@ -30,6 +31,20 @@ public class ChallengeEndpoints : ICarterModule
                 : Results.Ok(challenge.ToDto());
         })
         .WithSummary("Get challenge by id");
+
+        group.MapGet("/{id:guid}/rating", async (
+            Guid id,
+            int? limit,
+            IChallengeRatingRepository repository,
+            CancellationToken ct) =>
+        {
+            var rating = await repository.GetAsync(id, limit ?? 10, ct);
+
+            return rating is null
+                ? Results.NotFound()
+                : Results.Ok(rating);
+        })
+        .WithSummary("Get challenge rating: top users by the fewest interpreter iterations");
 
         group.MapPost("/", async (
             CreateChallengeRequest request,

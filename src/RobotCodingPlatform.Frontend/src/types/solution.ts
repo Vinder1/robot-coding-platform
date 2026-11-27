@@ -8,6 +8,7 @@ export interface SolutionAttemptSummary {
   status: SolutionAttemptStatus;
   success: boolean | null;
   error: string | null;
+  iterations: number | null;
   createdAt: string;
   completedAt: string | null;
 }

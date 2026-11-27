@@ -86,4 +86,5 @@ export interface RobotRunResult {
   frames: RobotFrame[];
   success: boolean;
   error: string | null;
+  iterations: number;
 }

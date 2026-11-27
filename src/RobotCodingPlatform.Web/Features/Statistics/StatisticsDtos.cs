@@ -32,6 +32,7 @@ public record SolutionAttemptStatisticsRowDto(
     string Status,
     bool? Success,
     string? Error,
+    int? Iterations,
     DateTime CreatedAt,
     DateTime? CompletedAt);
 

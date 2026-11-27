@@ -34,6 +34,7 @@ public class RunScriptConsumer(
             result.Success,
             result.Error,
             result.Compiled,
-            result.ErrorKind.ToString()));
+            result.ErrorKind.ToString(),
+            result.Iterations));
     }
 }

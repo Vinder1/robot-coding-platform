@@ -59,6 +59,9 @@ public sealed class OpenSearchStatisticsService(
                             .Keyword(keyword => keyword.Name(document => document.Status))
                             .Boolean(boolean => boolean.Name(document => document.Success))
                             .Text(text => text.Name(document => document.Error))
+                            .Number(number => number
+                                .Name(document => document.Iterations)
+                                .Type(NumberType.Integer))
                             .Date(date => date.Name(document => document.CreatedAt))
                             .Date(date => date.Name(document => document.CompletedAt))
                             .Number(number => number

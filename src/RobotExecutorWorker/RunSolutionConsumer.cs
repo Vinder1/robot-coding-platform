@@ -35,6 +35,7 @@ public class RunSolutionConsumer(
             message.AttemptId,
             result.Success,
             result.Error,
-            DateTime.UtcNow));
+            DateTime.UtcNow,
+            result.Iterations));
     }
 }

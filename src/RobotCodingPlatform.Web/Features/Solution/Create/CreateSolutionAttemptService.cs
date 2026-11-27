@@ -91,6 +91,7 @@ public class CreateSolutionAttemptService(
             attempt.Status.ToString(),
             attempt.Success,
             attempt.Error,
+            attempt.Iterations,
             attempt.CreatedAt,
             attempt.CompletedAt);
 

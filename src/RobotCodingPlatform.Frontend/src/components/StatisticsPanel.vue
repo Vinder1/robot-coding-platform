@@ -148,6 +148,7 @@
                 <th>Испытание</th>
                 <th>Пользователь</th>
                 <th>Статус</th>
+                <th>Итераций</th>
                 <th>Создана</th>
                 <th>Длительность</th>
               </tr>
@@ -157,6 +158,7 @@
                 <td class="challenge-name">{{ item.challengeName || 'Без названия' }}</td>
                 <td>{{ item.userName || '—' }}</td>
                 <td>{{ item.status }}</td>
+                <td>{{ item.iterations ?? '—' }}</td>
                 <td>{{ formatDate(item.createdAt) }}</td>
                 <td>{{ formatDuration(item.durationMs) }}</td>
               </tr>
@@ -217,6 +219,7 @@ interface IndexedAttempt {
   status: string;
   success: boolean;
   error: string | null;
+  iterations: number | null;
   createdAt: string;
   completedAt: string | null;
   durationMs: number | null;

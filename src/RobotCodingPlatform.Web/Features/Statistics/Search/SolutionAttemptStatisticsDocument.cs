@@ -10,6 +10,7 @@ public sealed class SolutionAttemptStatisticsDocument
     public string Status { get; set; } = "";
     public bool Success { get; set; }
     public string? Error { get; set; }
+    public int? Iterations { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
     public long? DurationMs { get; set; }

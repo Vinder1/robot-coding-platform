@@ -17,6 +17,8 @@ public class SolutionAttempt
     public SolutionAttemptStatus Status { get; set; } = SolutionAttemptStatus.Pending;
     public bool? Success { get; set; }
     public string? Error { get; set; }
+    /// Used as score, the less, the better
+    public int? Iterations { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? CompletedAt { get; set; }
 }
